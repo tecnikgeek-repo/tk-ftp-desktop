@@ -39,7 +39,7 @@ if (-not (Test-Path $winZip) -or -not (Test-Path $winPortable) -or -not (Test-Pa
 $assets = @(@{ key = 'windows-zip'; file = (Resolve-Path $winZip).Path })
 # installazione .exe: e' il download «Windows» della vetrina (pietrodefilippis.it/scarica-programma/...)
 $setupWin = $setupExe
-if (-not (Test-Path $setupWin)) { throw "Manca l'installazione ${setupWin}: rifai installeruild.ps1" }
+if (-not (Test-Path $setupWin)) { throw "Manca l'installazione ${setupWin}: rifai installer\build.ps1" }
 $assets += @{ key = 'windows'; file = (Resolve-Path $setupWin).Path }
 
 # --- Mac: build su GitHub del commit corrente, dmg presi dalla release v<versione>
