@@ -229,7 +229,7 @@ def main():
 
     # --- finestre del software libero
     from tkftp import URL_SORGENTE, VERSION
-    from tkftp.dialogs import AboutDialog, SettingsDialog
+    from tkftp.dialogs import SettingsDialog
     from tkftp.tk_licenza_qt import BenvenutoDialog, LicenzeDialog
     from tkftp.util import licenses_dir
     ben = BenvenutoDialog(app.licenza, "tk-ftp", URL_SORGENTE, win, style.logo_tile(96), appmod.RIGHE_BENVENUTO)
@@ -241,7 +241,7 @@ def main():
     voci = [lic.elenco.item(i).text() for i in range(lic.elenco.count())]
     check(voci and voci[0].startswith("COPYING"), f"licenze: prima l'AGPL ({voci[:3]})")
     check("COMPONENTI" in voci, "licenze: c'è COMPONENTI")
-    about = AboutDialog(win)
+    about = win._informazioni()   # finestra comune della libreria
     from PySide6.QtWidgets import QLabel, QPushButton
     labels = " ".join(x.text() for x in about.findChildren(QLabel))
     buttons = [x.text() for x in about.findChildren(QPushButton)]

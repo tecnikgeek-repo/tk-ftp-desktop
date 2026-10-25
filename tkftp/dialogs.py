@@ -10,10 +10,10 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from tkftp import APP_TITLE, AUTHOR, AUTHOR_URL, VERSION
+from tkftp import APP_TITLE, VERSION
 from tkftp.listing import octal_to_perms, perms_to_octal
-from tkftp.style import ACCENT, TkDialog, ic, kind_badge, logo_tile, text_btn, tk_info, tk_warn
-from tkftp.util import IS_MAC, IS_WIN, create_desktop_shortcut, data_dir, human_size, licenses_dir
+from tkftp.style import ACCENT, TkDialog, ic, kind_badge, logo_tile, text_btn, tk_warn
+from tkftp.util import IS_MAC, human_size
 
 
 PHRASE_MIN = 12  # frase segreta della cartella condivisa: minimo per quelle nuove
@@ -21,67 +21,6 @@ PHRASE_MIN = 12  # frase segreta della cartella condivisa: minimo per quelle nuo
 
 def _fmt(t):
     return time.strftime("%d/%m/%Y %H:%M", time.localtime(t)) if t else "data sconosciuta"
-
-
-class AboutDialog(TkDialog):
-    """Stessa finestra Informazioni delle altre app TK: fondo navy, schede VERSIONE / SVILUPPATORE."""
-
-    def __init__(self, win):
-        super().__init__(win, 460)
-        self.check = False
-        lay = self.body
-        lay.addWidget(QLabel("INFORMAZIONI", objectName="atitle"))
-        top = QHBoxLayout()
-        icon = QLabel()
-        icon.setPixmap(logo_tile(72))
-        top.addWidget(icon)
-        top.addSpacing(10)
-        col = QVBoxLayout()
-        t = QLabel(APP_TITLE)
-        t.setStyleSheet("font-size:24px; font-weight:800; color:#fff;")
-        col.addWidget(t)
-        s = QLabel("Client FTP, FTPS e SFTP con due pannelli,\ncoda trasferimenti e modifica al volo.")
-        s.setObjectName("asub")
-        col.addWidget(s)
-        top.addLayout(col, 1)
-        lay.addLayout(top)
-        from tkftp import pro
-        self.info_card("VERSIONE", f"{VERSION} · gratuito, tutte le funzioni")
-        self.info_card("LICENZA", "Software libero · AGPL-3.0")
-        self.info_card("SVILUPPATORE", f"{AUTHOR} · {AUTHOR_URL.split('//')[1]}")
-        self.info_card("I TUOI DATI", data_dir() + "\nLe password stanno in " +
-                       ("Gestione credenziali di Windows" if IS_WIN else "Portachiavi del Mac" if IS_MAC else "portachiavi"))
-        lay.addWidget(text_btn("refresh", "Cerca aggiornamenti", self._check, "#fff", "accent"))
-        row = QHBoxLayout()
-        row.setSpacing(8)
-        row.addWidget(text_btn("info", "Licenze e codice sorgente", self._licenses, "#fff", "ghost"), 1)
-        caffe = pro.pulsante_caffe("ghost")
-        if caffe is not None:
-            row.addWidget(caffe, 1)
-        lay.addLayout(row)
-        row = QHBoxLayout()
-        row.setSpacing(8)
-        if IS_WIN:
-            row.addWidget(text_btn("monitor", "Icona sul Desktop", self._shortcut, "#fff", "ghost"), 1)
-        row.addWidget(text_btn("", "Chiudi", self.accept, "#fff", "ghost"), 1)
-        lay.addLayout(row)
-
-    def _licenses(self):
-        from tkftp import URL_SORGENTE
-        from tkftp.tk_licenza_qt import LicenzeDialog
-        LicenzeDialog(APP_TITLE, VERSION, URL_SORGENTE, licenses_dir(), self).exec()
-
-    def _shortcut(self):
-        try:
-            path = create_desktop_shortcut()
-        except Exception as exc:
-            tk_warn(self.parent(), APP_TITLE, f"Non riesco a creare l'icona sul Desktop:\n{exc}")
-            return
-        tk_info(self.parent(), APP_TITLE, f"Icona creata sul Desktop:\n{path}")
-
-    def _check(self):
-        self.check = True
-        self.accept()
 
 
 class UpdateDialog(TkDialog):

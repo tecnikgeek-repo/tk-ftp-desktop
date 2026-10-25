@@ -21,7 +21,7 @@ from tkftp import (APP_TITLE, URL_SORGENTE, VERSION, editwatch, filezilla, listi
 from tkftp.util import conta
 from tkftp.tk_licenza_qt import benvenuto, dentro_lo_schermo, testata_compatta
 from tkftp.dialogs import (
-    AboutDialog, CertDialog, ChmodDialog, EditChangedDialog, HostKeyDialog, OverwriteDialog, SettingsDialog,
+    CertDialog, ChmodDialog, EditChangedDialog, HostKeyDialog, OverwriteDialog, SettingsDialog,
     UpdateDialog,
 )
 from tkftp.models import QUEUE_TABS, ProgressDelegate, QueueModel
@@ -1446,10 +1446,29 @@ class MainWindow(QMainWindow):
 
     # ================================================================== aggiornamenti e Informazioni
     def act_about(self):
-        dlg = AboutDialog(self)
-        dlg.exec()
-        if dlg.check:
-            self.check_updates(True)
+        """Informazioni: finestra comune a tutti i software TK (libreria), colore di tk-ftp."""
+        self._informazioni().exec()
+
+    def _informazioni(self):
+        from tkftp.tk_licenza_qt import InformazioniDialog
+        from tkftp.util import IS_MAC, licenses_dir
+        dove = "Gestione credenziali di Windows" if IS_WIN else "Portachiavi del Mac" if IS_MAC else "portachiavi"
+        return InformazioniDialog(
+            pro.licenza(), APP_TITLE, VERSION, "Client FTP, FTPS e SFTP con due pannelli, coda dei trasferimenti e "
+            "modifica al volo.", logo_tile(136), "#d97706",
+            dati=[("I tuoi dati", data_dir(), f"Le password stanno in {dove}, mai in chiaro su disco.")],
+            url_sorgente=URL_SORGENTE, cartella_licenze=licenses_dir(),
+            su_aggiornamenti=lambda: self.check_updates(True),
+            su_icona_desktop=self._icona_desktop if IS_WIN else None, parent=self)
+
+    def _icona_desktop(self):
+        from tkftp.util import create_desktop_shortcut
+        try:
+            path = create_desktop_shortcut()
+        except Exception as exc:
+            tk_warn(self, APP_TITLE, f"Non riesco a creare l'icona sul Desktop:\n{exc}")
+            return
+        tk_info(self, APP_TITLE, f"Icona creata sul Desktop:\n{path}")
 
     def ensure_shortcut(self):
         if not IS_WIN or not is_installed():
@@ -1678,7 +1697,7 @@ def dialogs_check(win):
     from tkftp.util import licenses_dir
     lic = pro.licenza()
     for d in (BenvenutoDialog(None, APP_TITLE, URL_SORGENTE, win, logo_tile(96), RIGHE_BENVENUTO),
-              LicenzeDialog(APP_TITLE, VERSION, URL_SORGENTE, licenses_dir(), win), AboutDialog(win),
+              LicenzeDialog(APP_TITLE, VERSION, URL_SORGENTE, licenses_dir(), win), win._informazioni(),
               SettingsDialog(win, win.settings, "")):
         d.deleteLater()
     assert lic is not None and lic.sbloccato() and not lic.free_pro()

@@ -325,14 +325,14 @@ def main():
         QTimer.singleShot(300, lambda: r._safe(lambda: (r.shot("permessi", d), d.close(), s13())))
 
     def s13():
-        from tkftp.dialogs import AboutDialog, SettingsDialog
+        from tkftp.dialogs import SettingsDialog
         d = SettingsDialog(win, settings, "")
         d.show()
 
         def nxt():
             r.shot("impostazioni", d)
             d.close()
-            a = AboutDialog(win)
+            a = win._informazioni()   # finestra comune della libreria
             a.show()
             QTimer.singleShot(300, lambda: r._safe(lambda: (r.shot_on_bg("informazioni", a), a.close(), s14())))
         QTimer.singleShot(300, lambda: r._safe(nxt))

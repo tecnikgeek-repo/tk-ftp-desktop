@@ -981,6 +981,258 @@ def benvenuto(lic, nome_app, url_sorgente, parent=None, logo=None, righe_extra=(
     BenvenutoDialog(lic, nome_app, url_sorgente, parent, logo, righe_extra).exec()
 
 
+CONTATTI = "https://pietrodefilippis.it/contatti/"
+
+
+class InformazioniDialog(_Centrata, QDialog):
+    """Finestra «Informazioni» UGUALE in tutti i software TK (cambia solo il colore d'accento).
+
+    Scheda navy arrotondata senza barra di sistema, trascinabile: logo, nome e descrizione; schede Versione,
+    Sviluppatore, I tuoi dati, Privacy (statistiche + caselle del programma); «Controlla aggiornamenti»;
+    «Licenze e codice sorgente» + «Offrimi un caffè»; «Icona sul Desktop» + «Chiudi»; Termini · Privacy · Contatti.
+
+        InformazioniDialog(lic, "tk-pdf", VERSION, "Lettore ed editor PDF", logo, "#e11d48",
+                           dati=[("I tuoi dati", cartella)], url_sorgente=URL_SORGENTE,
+                           cartella_licenze=..., su_aggiornamenti=fn, su_icona_desktop=fn_o_None,
+                           caselle=[(QCheckBox, "spiegazione")], pulsanti=[("Testo", fn)], parent=win).exec()
+
+    `su_aggiornamenti` si chiama DOPO la chiusura della finestra. Un pulsante di `pulsanti` può restituire un
+    testo nuovo per sé (es. «Pulsanti con testo: SÌ»).
+    """
+
+    LARGHEZZA = 480
+
+    def __init__(self, lic, nome_app, versione, descrizione, logo, accento, dati=(), url_sorgente="",
+                 cartella_licenze="", su_aggiornamenti=None, su_icona_desktop=None, caselle=(), pulsanti=(),
+                 parent=None):
+        super().__init__(parent)
+        self.lic = lic
+        self._dopo = None
+        self._drag = None
+        self.setWindowTitle(f"Informazioni — {nome_app}")
+        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setModal(True)
+        scuro = _scuro(accento, 125)
+        chiaro = QColor(accento).lighter(150).name()
+        self.setStyleSheet(
+            f"#tkInfoCarta {{ background:{NAVY}; border:1px solid {NAVY_3}; border-radius:20px; }}"
+            "QLabel { color:#ffffff; background:transparent; }"
+            f"#tkInfoKicker {{ color:{accento}; font-size:11px; font-weight:800; letter-spacing:2px; }}"
+            "#tkInfoNome { font-size:22px; font-weight:800; }"
+            f"#tkInfoDesc {{ color:{CHIARO}; font-size:13px; }}"
+            f"#tkInfoScheda {{ background:{NAVY_2}; border-radius:12px; }}"
+            f"#tkInfoTitolo {{ color:{accento}; font-size:11px; font-weight:800; letter-spacing:1px; }}"
+            "#tkInfoValore { font-size:13px; font-weight:600; }"
+            f"#tkInfoNota {{ color:{GRIGIO}; font-size:12px; }}"
+            f"#tkInfoLink {{ color:{chiaro}; font-size:12px; font-weight:700; }}"
+            # altezza fissata QUI (il foglio vince su setFixedHeight): uguale in tutti i programmi, qualunque stile abbiano
+            "QPushButton { border:0; border-radius:10px; padding:0 14px; min-height:42px; max-height:42px;"
+            " font-size:13px; font-weight:700; }"
+            f"QPushButton#tkInfoAccento {{ background:{accento}; color:#ffffff; }}"
+            f"QPushButton#tkInfoAccento:hover {{ background:{scuro}; }}"
+            f"QPushButton#tkInfoChiaro {{ background:{NAVY_2}; color:#ffffff; border:1px solid {NAVY_3}; }}"
+            f"QPushButton#tkInfoChiaro:hover {{ background:{NAVY_3}; }}"
+            f"QScrollArea, #tkInfoCorpo {{ background:transparent; border:0; }}"
+            f"QScrollBar:vertical {{ background:transparent; width:8px; margin:6px 2px; }}"
+            f"QScrollBar::handle:vertical {{ background:{NAVY_3}; border-radius:3px; min-height:30px; }}"
+            "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height:0; }"
+            "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background:transparent; }"
+            + stile_casella())
+        fuori = QVBoxLayout(self)
+        fuori.setContentsMargins(26, 20, 26, 32)
+        carta = QFrame()
+        carta.setObjectName("tkInfoCarta")
+        try:
+            from PySide6.QtWidgets import QGraphicsDropShadowEffect
+            ombra = QGraphicsDropShadowEffect(carta)
+            ombra.setBlurRadius(44)
+            ombra.setOffset(0, 12)
+            ombra.setColor(QColor(0, 0, 0, 110))
+            carta.setGraphicsEffect(ombra)
+        except Exception:
+            pass
+        fuori.addWidget(carta)
+        cl = QVBoxLayout(carta)
+        cl.setContentsMargins(0, 0, 0, 0)
+        self._scorri = QScrollArea()
+        self._scorri.setWidgetResizable(True)
+        self._scorri.setFrameShape(QFrame.Shape.NoFrame)
+        self._scorri.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._corpo = QWidget()
+        self._corpo.setObjectName("tkInfoCorpo")
+        lay = QVBoxLayout(self._corpo)
+        lay.setContentsMargins(24, 22, 24, 20)
+        lay.setSpacing(12)
+        self._scorri.setWidget(self._corpo)
+        cl.addWidget(self._scorri)
+
+        kicker = QLabel("INFORMAZIONI")
+        kicker.setObjectName("tkInfoKicker")
+        lay.addWidget(kicker)
+        testa = QHBoxLayout()
+        testa.setSpacing(16)
+        tile = QLabel()
+        tile.setFixedSize(68, 68)
+        tile.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        if logo is not None and not logo.isNull():
+            dpr = logo.devicePixelRatio() or 1
+            pm = logo.scaled(int(68 * dpr), int(68 * dpr), Qt.AspectRatioMode.KeepAspectRatio,
+                             Qt.TransformationMode.SmoothTransformation)
+            pm.setDevicePixelRatio(dpr)
+            tile.setPixmap(pm)
+        testa.addWidget(tile, 0, Qt.AlignmentFlag.AlignTop)
+        col = QVBoxLayout()
+        col.setSpacing(4)
+        n = QLabel(nome_app)
+        n.setObjectName("tkInfoNome")
+        col.addWidget(n)
+        d = QLabel(descrizione)
+        d.setObjectName("tkInfoDesc")
+        d.setWordWrap(True)
+        col.addWidget(d)
+        testa.addLayout(col, 1)
+        lay.addLayout(testa)
+
+        schede = [("Versione", f"{versione} · tutte le funzioni, gratis", ""),
+                  ("Licenza", "Software libero · GNU AGPL-3.0", "Fornito così com'è, senza alcuna garanzia."),
+                  ("Sviluppatore", f"TecnikGeek · {_link('pietrodefilippis.it', 'https://pietrodefilippis.it')}", "")]
+        schede += [(t, v, nota) for t, v, *resto in dati for nota in [resto[0] if resto else ""]]
+        for titolo, valore, nota in schede:
+            lay.addWidget(self._scheda(titolo, valore, nota))
+
+        # privacy: statistiche (consenso) + caselle del programma, con la spiegazione sempre visibile
+        priv = QFrame()
+        priv.setObjectName("tkInfoScheda")
+        pl = QVBoxLayout(priv)
+        pl.setContentsMargins(16, 12, 16, 14)
+        pl.setSpacing(6)
+        t = QLabel("PRIVACY")
+        t.setObjectName("tkInfoTitolo")
+        pl.addWidget(t)
+        tutte = [(casella_statistiche(lic), "Una volta al giorno: nome, versione e sistema, con un codice casuale. "
+                                            "Niente file né contenuti.")] + list(caselle)
+        for casella, spiega in tutte:
+            casella.setToolTip("")
+            casella.setStyleSheet("")          # prende lo stile della finestra (uguale ovunque)
+            pl.addWidget(casella)
+            if spiega:
+                s = QLabel(spiega)
+                s.setObjectName("tkInfoNota")
+                s.setWordWrap(True)
+                s.setContentsMargins(30, 0, 0, 4)
+                pl.addWidget(s)
+        lay.addWidget(priv)
+
+        for testo, fn in pulsanti:
+            b = self._pulsante(testo, "tkInfoChiaro")
+            b.clicked.connect(lambda _=False, b=b, fn=fn: self._extra(b, fn))
+            lay.addWidget(b)
+        if su_aggiornamenti is not None:
+            agg = self._pulsante("Controlla aggiornamenti", "tkInfoAccento")
+            agg.clicked.connect(lambda: self._chiudi_e(su_aggiornamenti))
+            lay.addWidget(agg)
+        riga = QHBoxLayout()
+        riga.setSpacing(8)
+        lic_b = self._pulsante("Licenze e codice sorgente", "tkInfoChiaro")
+        lic_b.clicked.connect(lambda: LicenzeDialog(nome_app, versione, url_sorgente, cartella_licenze, self).exec())
+        riga.addWidget(lic_b, 1)
+        caffe = pulsante_caffe(lic, nome_oggetto="tkInfoChiaro")
+        if caffe is not None:
+            caffe.setFixedHeight(self.ALTEZZA_PULSANTE)
+            riga.addWidget(caffe, 1)
+        lay.addLayout(riga)
+        riga2 = QHBoxLayout()
+        riga2.setSpacing(8)
+        if su_icona_desktop is not None:
+            ico = self._pulsante("Icona sul Desktop", "tkInfoChiaro")
+            ico.clicked.connect(su_icona_desktop)
+            riga2.addWidget(ico, 1)
+        chiudi = self._pulsante("Chiudi", "tkInfoChiaro")
+        chiudi.clicked.connect(self.accept)
+        riga2.addWidget(chiudi, 1)
+        lay.addLayout(riga2)
+        link = QLabel(f"<a href='{TERMINI}' style='color:{chiaro};text-decoration:none;'>Termini</a> &nbsp;·&nbsp; "
+                      f"<a href='{PRIVACY}' style='color:{chiaro};text-decoration:none;'>Privacy</a> &nbsp;·&nbsp; "
+                      f"<a href='{CONTATTI}' style='color:{chiaro};text-decoration:none;'>Contatti</a>")
+        link.setObjectName("tkInfoLink")
+        link.setTextFormat(Qt.TextFormat.RichText)
+        link.setOpenExternalLinks(True)
+        link.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lay.addWidget(link)
+        self._misura()
+
+    def _scheda(self, titolo, valore, nota=""):
+        f = QFrame()
+        f.setObjectName("tkInfoScheda")
+        v = QVBoxLayout(f)
+        v.setContentsMargins(16, 12, 16, 12)
+        v.setSpacing(3)
+        t = QLabel(titolo.upper())
+        t.setObjectName("tkInfoTitolo")
+        v.addWidget(t)
+        x = QLabel(valore)
+        x.setObjectName("tkInfoValore")
+        x.setWordWrap(True)
+        x.setTextFormat(Qt.TextFormat.RichText)
+        x.setOpenExternalLinks(True)
+        x.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        v.addWidget(x)
+        if nota:
+            s = QLabel(nota)
+            s.setObjectName("tkInfoNota")
+            s.setWordWrap(True)
+            v.addWidget(s)
+        return f
+
+    ALTEZZA_PULSANTE = 42
+
+    @staticmethod
+    def _pulsante(testo, nome):
+        b = QPushButton(testo)
+        b.setObjectName(nome)
+        b.setCursor(Qt.CursorShape.PointingHandCursor)
+        b.setFixedHeight(InformazioniDialog.ALTEZZA_PULSANTE)   # uguale in tutti i programmi, qualunque stile abbiano
+        return b
+
+    def _extra(self, b, fn):
+        nuovo = fn()
+        if isinstance(nuovo, str) and nuovo:
+            b.setText(nuovo)
+
+    def _chiudi_e(self, fn):
+        self._dopo = fn
+        self.accept()
+
+    def done(self, r):
+        super().done(r)
+        if self._dopo is not None:
+            fn, self._dopo = self._dopo, None
+            QTimer.singleShot(0, fn)
+
+    def _misura(self):
+        """Larghezza fissa, altezza sul testo vero; oltre lo schermo il contenuto scorre."""
+        self.setFixedWidth(self.LARGHEZZA + 52)
+        utile = self.LARGHEZZA - 2 - self._scorri.verticalScrollBar().sizeHint().width()
+        alto = self._corpo.layout().totalHeightForWidth(utile)
+        if alto <= 0:
+            alto = self._corpo.sizeHint().height()
+        schermo = QGuiApplication.primaryScreen()
+        massimo = (schermo.availableGeometry().height() - 40) if schermo is not None else 900
+        self.resize(self.LARGHEZZA + 52, min(alto + 2 + 52, massimo))
+
+    def mousePressEvent(self, e):
+        if e.button() == Qt.MouseButton.LeftButton:
+            self._drag = e.globalPosition().toPoint() - self.frameGeometry().topLeft()
+
+    def mouseMoveEvent(self, e):
+        if self._drag is not None and e.buttons() & Qt.MouseButton.LeftButton:
+            self.move(e.globalPosition().toPoint() - self._drag)
+
+    def mouseReleaseEvent(self, e):
+        self._drag = None
+
+
 class LicenzeDialog(_Centrata, QDialog):
     """Informazioni → «Licenze e codice sorgente»: AGPL del programma + licenze dei componenti inclusi.
     `cartella_licenze` = cartella `licenze/` del pacchetto (un file .txt per componente)."""
