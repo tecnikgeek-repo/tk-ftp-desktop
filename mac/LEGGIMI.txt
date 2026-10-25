@@ -1,0 +1,40 @@
+tk-ftp per Mac — installazione
+==============================
+
+1. Trascina «tk-ftp» sulla cartella «Applicazioni».
+2. Apri tk-ftp da Applicazioni (o da Launchpad).
+
+Software libero
+tk-ftp è gratuito, con tutte le funzioni, ed è software libero: licenza GNU AGPL-3.0, senza alcuna
+garanzia. Codice sorgente: https://github.com/tecnikgeek-repo/tk-ftp-desktop
+Le licenze di tk-ftp e dei componenti inclusi (Python, Qt, paramiko…) sono nell'app: Informazioni →
+«Licenze e codice sorgente» (oppure tk-ftp.app/Contents/Resources/licenze).
+Il nome tk-ftp e il logo non sono coperti dalla licenza: una versione modificata deve avere un nome diverso.
+
+I tuoi dati (restano sul Mac)
+- Siti, impostazioni e chiavi dei server: Libreria → Application Support → tk-ftp.
+- Le password stanno nel Portachiavi del Mac (voce «tk-ftp»), mai in chiaro su disco.
+- Se sul Mac c'è FileZilla, al primo avvio tk-ftp propone di importare i siti.
+- Per togliere tutto: trascina tk-ftp nel Cestino, cancella la cartella Libreria → Application
+  Support → tk-ftp e, in Accesso Portachiavi, le voci «tk-ftp».
+
+Cosa va in rete
+- I server FTP/SFTP che scegli tu (se un server non accetta TLS, tk-ftp chiede prima di mandare la
+  password in chiaro).
+- pietrodefilippis.it per controllare se c'è una versione nuova (aggiornamenti firmati).
+- Il sito web dei tuoi siti, per prendere il loro logo (si spegne nelle Impostazioni).
+- Statistiche anonime SOLO se lo consenti (benvenuto o Impostazioni).
+
+PRIMO AVVIO
+L'app non è firmata con un certificato Apple, quindi al primo avvio macOS può bloccarla
+("impossibile verificare lo sviluppatore" oppure "l'app è danneggiata").
+
+  • Apri Impostazioni di Sistema → Privacy e sicurezza, scorri in basso e premi
+    «Apri comunque» accanto a tk-ftp, poi conferma.
+
+  • In alternativa, da Terminale:
+        xattr -dr com.apple.quarantine "/Applications/tk-ftp.app"
+
+Serve farlo una sola volta.
+
+Creato da TecnikGeek — https://pietrodefilippis.it

@@ -1,0 +1,51 @@
+name: Build macOS
+
+# Solo su richiesta (gh workflow run): i minuti Mac costano 10 volte, si costruisce
+# solo quando si pubblica una versione (deciso il 2026-10-11).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Build
+        run: bash mac/build_mac.sh
+      # i dmg vanno nella release del repo (lo spazio degli artifact di Actions è condiviso e si riempie)
+      - name: Carica il dmg nella release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="$(python3 -c "import re;print(re.search(r'VERSION = \"(.+)\"', open('tkftp/__init__.py').read()).group(1))")"
+          TAG="v$V"
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "tk-ftp $V" --notes "Build automatica" --target "$GITHUB_SHA" || true
+          for i in 1 2 3 4 5; do
+            gh release upload "$TAG" dist/*.dmg dist/selftest-*.png dist/test-core-*.txt --clobber && break
+            sleep 8
+          done
+          gh release view "$TAG" --json assets --jq '.assets[].name'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        continue-on-error: true
+        with:
+          name: selftest-${{ matrix.arch }}
+          path: |
+            dist/selftest-*.png
+            dist/*.txt
+          retention-days: 3
+          if-no-files-found: ignore

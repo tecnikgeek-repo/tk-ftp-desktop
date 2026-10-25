@@ -1,0 +1,38 @@
+tk-ftp - client FTP, FTPS e SFTP con due pannelli, coda trasferimenti e modifica al volo
+=====================================================================================
+
+COME SI USA
+1. Estrai questa cartella dove vuoi (anche su una pennetta USB).
+2. Doppio clic su "Avvia tk-ftp.cmd" (la prima volta). Al primo avvio compare nella cartella
+   l'icona "tk-ftp": da lì in poi usa quella.
+3. Se sul computer c'è FileZilla, tk-ftp propone di importare i tuoi siti.
+
+SOFTWARE LIBERO
+tk-ftp è gratuito, con tutte le funzioni, ed è software libero: licenza GNU AGPL-3.0
+(testo completo in app\licenze\COPYING-AGPL-3.0.txt). Puoi usarlo, studiarlo, modificarlo e
+condividerlo. È fornito così com'è, senza alcuna garanzia.
+Codice sorgente: https://github.com/tecnikgeek-repo/tk-ftp-desktop
+Licenze dei componenti inclusi (Python, Qt, paramiko...): app\licenze\COMPONENTI.txt
+Il nome tk-ftp e il logo non sono coperti dalla licenza: una versione modificata deve avere
+un nome diverso. Se ti è utile, puoi offrirmi un caffè dalle Impostazioni.
+
+I TUOI DATI (restano sul computer)
+- Siti, gruppi, impostazioni e chiavi dei server stanno nella cartella "Dati", accanto ad "app".
+- Le password NON stanno nella cartella: sono in Gestione credenziali di Windows (legate al tuo
+  utente di Windows). Su un altro PC vanno reinserite, oppure portate con la cartella condivisa
+  (Impostazioni → Siti condivisi col telefono, password cifrate con la tua frase segreta).
+- Gli aggiornamenti automatici sostituiscono solo la cartella "app".
+
+COSA VA IN RETE
+- I server FTP/SFTP che scegli tu. Se un server non accetta connessioni protette (TLS), tk-ftp
+  chiede prima di mandare la password in chiaro.
+- pietrodefilippis.it per controllare se c'è una versione nuova (gli aggiornamenti sono firmati:
+  tk-ftp installa solo quelli veri).
+- Il sito web dei tuoi siti, per prendere il loro logo (si spegne nelle Impostazioni).
+- Statistiche anonime (nome del programma, versione, sistema, un codice casuale) SOLO se lo
+  consenti nella finestra di benvenuto o nelle Impostazioni.
+
+SE WINDOWS BLOCCA L'AVVIO
+Tasto destro sul file ZIP scaricato -> Proprietà -> spunta "Sblocca" -> OK, poi estrai di nuovo.
+
+Sviluppato da TecnikGeek - https://pietrodefilippis.it
