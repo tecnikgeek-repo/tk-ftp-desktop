@@ -1736,7 +1736,8 @@ def main():
     if IS_WIN:
         app.setFont(QFont("Segoe UI", 10))
     settings = Settings()
-    app.setStyleSheet(stylesheet(check_png(os.path.join(data_dir(), "spunta.png"))))
+    from tkftp.tk_licenza_qt import stile_caselle_globale
+    app.setStyleSheet(stylesheet(check_png(os.path.join(data_dir(), "spunta.png"))) + stile_caselle_globale("QFrame#tkcard QCheckBox"))
     if IS_WIN:
         try:
             import ctypes

@@ -91,7 +91,8 @@ def centra(dlg):
     """Mette la finestra al centro: sopra la finestra principale se è visibile e sullo schermo, altrimenti al
     centro dello schermo (all'avvio la principale può non avere ancora una posizione vera)."""
     try:
-        dlg.adjustSize()
+        if not dlg.testAttribute(Qt.WidgetAttribute.WA_Resized):
+            dlg.adjustSize()   # solo se la finestra non ha già una misura sua (resize): non va rimpicciolita
         padre = dlg.parentWidget().window() if dlg.parentWidget() is not None else None
         schermo = None
         if padre is not None and padre.isVisible():
@@ -137,15 +138,28 @@ def _spunta_png():
     return path
 
 
-def stile_casella(selettore="QCheckBox"):
-    """Casella ben visibile su fondo scuro: quadrato chiaro, blu con la spunta bianca quando è attiva."""
+def _indicatore(selettore):
+    """Quadrato della casella: bianco con bordo grigio (si vede su fondo scuro e chiaro), blu con la spunta
+    bianca quando è attiva, grigio chiaro quando è disattivata."""
     img = _spunta_png().replace("\\", "/")
-    return (f"{selettore} {{ color:#ffffff; font-size:13px; spacing:10px; }}"
-            f"{selettore}::indicator {{ width:20px; height:20px; border-radius:6px; border:2px solid {CHIARO};"
-            f" background:{NAVY}; }}"
-            f"{selettore}::indicator:hover {{ border-color:#ffffff; }}"
+    return (f"{selettore}::indicator {{ width:20px; height:20px; border-radius:6px; border:2px solid {GRIGIO};"
+            " background:#ffffff; }"
+            f"{selettore}::indicator:hover {{ border-color:{PRO_BLU}; }}"
             f"{selettore}::indicator:checked {{ background:{PRO_BLU}; border-color:{PRO_BLU}; image:url({img}); }}"
-            f"{selettore}::indicator:checked:hover {{ background:{PRO_BLU_SCURO}; border-color:{PRO_BLU_SCURO}; }}")
+            f"{selettore}::indicator:checked:hover {{ background:{PRO_BLU_SCURO}; border-color:{PRO_BLU_SCURO}; }}"
+            f"{selettore}::indicator:disabled {{ background:#e2e8f0; border-color:#cbd5e1; }}")
+
+
+def stile_casella(selettore="QCheckBox"):
+    """Casella su fondo scuro (testo bianco), con il quadrato comune di _indicatore()."""
+    return f"{selettore} {{ color:#ffffff; font-size:13px; spacing:10px; }}" + _indicatore(selettore)
+
+
+def stile_caselle_globale(*altri_selettori):
+    """Da aggiungere IN FONDO al foglio di stile dell'applicazione: TUTTE le caselle del programma con lo stesso
+    quadrato ben visibile (il colore del testo resta quello del programma). `altri_selettori` = regole più
+    specifiche del programma da riallineare (es. "QFrame#tkcard QCheckBox")."""
+    return "QCheckBox { spacing:10px; }" + "".join(_indicatore(s) for s in ("QCheckBox",) + altri_selettori)
 
 
 class _Centrata:
@@ -846,7 +860,8 @@ def casella_statistiche(lic, testo="Invia statistiche anonime di utilizzo"):
     c = QCheckBox(testo)
     c.setObjectName("tkCasella")
     c.setStyleSheet(stile_casella("QCheckBox#tkCasella"))
-    c.setToolTip(TESTO_STATISTICHE)
+    # in HTML il suggerimento va a capo (in testo semplice resta una riga lunga quanto lo schermo)
+    c.setToolTip(f"<p style='max-width:360px'>{TESTO_STATISTICHE}</p>")
     c.setChecked(bool(lic is not None and lic.consenso_statistiche()))
     if lic is not None:
         c.toggled.connect(lambda v: lic.imposta_statistiche(v))
