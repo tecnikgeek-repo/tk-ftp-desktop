@@ -34,6 +34,9 @@ import uuid
 from datetime import datetime, timezone
 
 SERVER = "https://pietrodefilippis.it/wp-json/tk-license/v1"
+# codice anonimo che l'updater aggiunge alla richiesta del manifest: un'installazione conta una volta sola anche
+# se cambia rete. Lo imposta Licenza all'avvio ("" finché non c'è: allora il server conta per indirizzo)
+CODICE_CONTEGGIO = ""
 # Chiave pubblica Ed25519 del server licenze (GET /chiave-pubblica). La segreta resta sul server.
 CHIAVE_PUBBLICA = "3SMmzwVHDZTk7TPQeQhwQoT6mi2zroNja3wzan06Br0="
 RICONTROLLO = 7 * 86400        # ogni quanto si richiede al server lo stato della chiave
@@ -173,11 +176,15 @@ class Licenza:
 
     def _dispositivo(self):
         # codice casuale creato la prima volta e conservato: non si legge nulla dal computer
+        global CODICE_CONTEGGIO
         grezzo = self._stato.get("casuale")
         if not grezzo:
             grezzo = uuid.uuid4().hex
             self._stato["casuale"] = grezzo
             self._scrivi()
+        # per contare le installazioni al controllo degli aggiornamenti (Privacy 4-ter): diverso dal codice
+        # delle statistiche, così i due non si possono collegare
+        CODICE_CONTEGGIO = hashlib.sha256(("tk-conta|" + grezzo).encode()).hexdigest()[:16]
         return hashlib.sha256(("tk-dispositivo|" + grezzo).encode()).hexdigest()[:32]
 
     @property

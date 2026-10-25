@@ -14,6 +14,15 @@ from tkftp import VERSION
 from tkftp.tk_aggiornamento import asset_valido
 from tkftp.util import APP_ROOT, IS_MAC, log_dir, mac_bundle_path
 
+def _codice_conteggio():
+    """«; <codice>» per il manifest: conta l'installazione una volta sola anche se cambia rete (Privacy 4-ter)."""
+    try:
+        from tkftp import tk_licenza
+        return f"; {tk_licenza.CODICE_CONTEGGIO}" if tk_licenza.CODICE_CONTEGGIO else ""
+    except Exception:
+        return ""
+
+
 MANIFEST_URL = "https://pietrodefilippis.it/updates/tk-ftp.json"
 CHECK_INTERVAL = 12 * 3600
 # nome del manifest (tk-pdf, tk-tv-player-mac…): entra nel testo firmato
@@ -115,7 +124,7 @@ def is_newer(remote, local=VERSION):
 
 def _open(url, timeout):
     import ssl
-    req = urllib.request.Request(url, headers={"User-Agent": f"tk-ftp/{VERSION} ({platform_key()})",
+    req = urllib.request.Request(url, headers={"User-Agent": f"tk-ftp/{VERSION} ({platform_key()}{_codice_conteggio()})",
                                                "Cache-Control": "no-cache"})
     ctx = None
     if url.startswith("https:"):
