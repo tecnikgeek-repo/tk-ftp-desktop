@@ -1,23 +1,21 @@
 <!-- README generato da Dropbox/CLAUDE/dev/agpl-rollout/readme/genera_readme.py: modificare lì -->
 <div align="center">
 
-<img src="docs/logo.png" width="120" alt="tk-ftp">
+<img src="docs/vetrina.png" alt="tk-ftp: FTP, FTPS e SFTP senza pensieri. I tuoi file non si rovinano mai." width="100%">
 
-# tk-ftp
+<br><br>
+
+<a href="https://pietrodefilippis.it/scarica-programma/tk-ftp-desktop/windows/"><img alt="Scarica per Windows" src="https://img.shields.io/badge/%E2%AC%87%20%20Windows-scarica%20gratis-0078D4?style=for-the-badge&logo=windows&logoColor=white"></a> &nbsp; <a href="https://pietrodefilippis.it/scarica-programma/tk-ftp-desktop/mac/"><img alt="Scarica per macOS" src="https://img.shields.io/badge/%E2%AC%87%20%20macOS-scarica%20gratis-111111?style=for-the-badge&logo=apple&logoColor=white"></a> &nbsp; <a href="https://pietrodefilippis.it/donazione/"><img alt="Offrimi un caffè" src="https://img.shields.io/badge/%E2%98%95%20%20Offrimi%20un%20caff%C3%A8-facoltativo-f59e0b?style=for-the-badge"></a>
+
+<br><br>
+
+<a href="COPYING"><img alt="Licenza AGPL-3.0" src="https://img.shields.io/badge/licenza-AGPL--3.0-16a34a?style=for-the-badge"></a> <img alt="Windows" src="https://img.shields.io/badge/Windows-10%20%C2%B7%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white"> <img alt="macOS" src="https://img.shields.io/badge/macOS-Intel%20%C2%B7%20Apple%20Silicon-111111?style=for-the-badge&logo=apple&logoColor=white"> <img alt="Versione" src="https://img.shields.io/github/v/tag/tecnikgeek-repo/tk-ftp-desktop?label=versione&style=for-the-badge&color=d97706"> <img alt="Zero pubblicità" src="https://img.shields.io/badge/pubblicit%C3%A0-zero-0f172a?style=for-the-badge">
+
+<br>
 
 ### FTP, FTPS e SFTP senza pensieri. I tuoi file non si rovinano mai.
 
 Il client a due pannelli per chi gestisce siti: trascini, la coda lavora, la modifica al volo carica da sola.
-
-<a href="COPYING"><img alt="Licenza AGPL-3.0" src="https://img.shields.io/badge/licenza-AGPL--3.0-16a34a?style=for-the-badge"></a> <img alt="Windows" src="https://img.shields.io/badge/Windows-10%20%C2%B7%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white"> <img alt="macOS" src="https://img.shields.io/badge/macOS-Intel%20%C2%B7%20Apple%20Silicon-111111?style=for-the-badge&logo=apple&logoColor=white"> <img alt="Versione" src="https://img.shields.io/github/v/tag/tecnikgeek-repo/tk-ftp-desktop?label=versione&style=for-the-badge&color=d97706"> <img alt="Gratis" src="https://img.shields.io/badge/prezzo-gratis-f59e0b?style=for-the-badge">
-
-<br>
-
-<a href="https://pietrodefilippis.it/software/"><img alt="Scarica" src="https://img.shields.io/badge/%E2%AC%87%20%20Scarica-gratis-d97706?style=for-the-badge"></a> &nbsp; <a href="https://pietrodefilippis.it/donazione/"><img alt="Offrimi un caffè" src="https://img.shields.io/badge/%E2%98%95%20%20Offrimi%20un%20caff%C3%A8-facoltativo-f59e0b?style=for-the-badge"></a>
-
-<br><br>
-
-<img src="docs/screenshot.png" alt="tk-ftp in funzione" width="920">
 
 </div>
 
@@ -70,6 +68,19 @@ Importa i siti salvati in altri programmi FTP e condividili, cifrati, con l'app 
 </tr>
 </table>
 
+## 🖥️ Com'è fatto
+
+<div align="center">
+<img src="docs/screenshot.png" alt="tk-ftp in funzione" width="100%">
+</div>
+
+## 📱 Anche sul telefono
+
+**tk-ftp** c'è anche per Android, gratis e libera come questo programma:
+[tk-ftp-app](https://github.com/tecnikgeek-repo/tk-ftp-app).
+
+<a href="https://github.com/tecnikgeek-repo/tk-ftp-app"><img alt="tk-ftp per Android" src="https://img.shields.io/badge/%F0%9F%93%B1%20%20tk--ftp-per%20Android-d97706?style=for-the-badge&logo=android&logoColor=white"></a>
+
 ## 🔒 I tuoi dati
 
 Le password dei siti stanno nel portachiavi del sistema (Gestione credenziali di Windows o Portachiavi del Mac), mai in chiaro su disco. Nessun server dell'autore vede i tuoi siti o i tuoi file.
@@ -86,8 +97,8 @@ pubblicati dall'autore.
 
 ## 📥 Installazione
 
-- **Windows 10 / 11** â€” scarica lo ZIP o l'installer, estrai e avvia. Non servono i permessi di amministratore.
-- **macOS** (Intel o Apple Silicon) â€” apri il `.dmg` e trascina l'app in *Applicazioni*. Al primo avvio: clic destro sull'app â†’ *Apri*.
+- **Windows 10 / 11** — scarica l'installer `.exe` e avvialo. Non servono i permessi di amministratore.
+- **macOS** (Intel o Apple Silicon) — apri il `.dmg` e trascina l'app in *Applicazioni*. Al primo avvio: clic destro sull'app → *Apri*.
 - **Portatile** — la versione ZIP gira anche da una chiavetta USB.
 
 Gli aggiornamenti arrivano da soli: quando esce una versione nuova il programma te lo propone.
