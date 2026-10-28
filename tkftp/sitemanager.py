@@ -96,9 +96,9 @@ class SiteManager(QDialog):
         hl.addLayout(col)
         hl.addStretch(1)
         if self.actions.get("import"):
-            hl.addWidget(text_btn("import", "Importa da FileZilla", self.actions["import"], "#fff", "ghost"))
+            hl.addWidget(text_btn("import", "Importa siti", self.actions["import"], "#fff", "ghost"))
         if self.actions.get("export"):
-            hl.addWidget(text_btn("export", "Esporta per FileZilla", self.actions["export"], "#fff", "ghost"))
+            hl.addWidget(text_btn("export", "Esporta siti", self.actions["export"], "#fff", "ghost"))
         hl.addWidget(tool_btn("close", "Chiudi (Esc)", self.accept, "#ffffff", "mini"))
         hl.itemAt(hl.count() - 1).widget().setStyleSheet(
             "QPushButton { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); }"
@@ -441,7 +441,7 @@ class SiteManager(QDialog):
             self.title.setText(group.rsplit("/", 1)[-1] if group else "Nessun sito")
             n = sum(1 for s in self.store.sites if s.group == group or s.group.startswith(group + "/")) if group else 0
             self.subtitle.setText(f"Gruppo con {conta(n, 'sito', 'siti')} · doppio clic per rinominarlo" if group else
-                                  "Crea un sito con «+ Sito» oppure importa i siti da FileZilla")
+                                  "Crea un sito con «+ Sito» oppure importa i siti da un altro programma FTP")
             for w in (self.f_name, self.f_host, self.f_user, self.f_pass, self.f_key, self.f_rdir, self.f_ldir,
                       self.f_web):
                 w.clear()

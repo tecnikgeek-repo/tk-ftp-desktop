@@ -191,12 +191,12 @@ class MainWindow(QMainWindow):
         hl.addWidget(self.update_btn)
         self.siti_btn = text_btn("server", "Siti", self.open_sites, "#fff", "ghost", "Gestore siti (Ctrl+S)")
         hl.addWidget(self.siti_btn)
-        self.fz_btn = text_btn("swap", "FileZilla", None, "#fff", "ghost", "Importa ed esporta i siti di FileZilla")
+        self.fz_btn = text_btn("swap", "Importa / esporta", None, "#fff", "ghost", "Importa ed esporta i siti con altri programmi FTP")
         m = QMenu(self)
-        m.addAction(QAction(ic("import", NAVY, 16), "Importa da FileZilla installato", self, triggered=self.import_installed))
+        m.addAction(QAction(ic("import", NAVY, 16), "Importa dal programma FTP installato", self, triggered=self.import_installed))
         m.addAction(QAction(ic("open", NAVY, 16), "Importa un file sitemanager.xml…", self, triggered=self.import_file))
         m.addSeparator()
-        m.addAction(QAction(ic("export", NAVY, 16), "Esporta per FileZilla…", self, triggered=self.export_file))
+        m.addAction(QAction(ic("export", NAVY, 16), "Esporta siti in file .xml…", self, triggered=self.export_file))
         m.addSeparator()
         m.addAction(QAction(ic("share", NAVY, 16), "Siti condivisi col telefono…", self, triggered=self.open_settings))
         self.fz_btn.setMenu(m)
@@ -1307,15 +1307,15 @@ class MainWindow(QMainWindow):
             n = len(filezilla.read_file(path).sites)
         except Exception:
             return
-        if n and tk_choice(self, "Ho trovato FileZilla", f"Sul computer c'è FileZilla con {conta(n, 'sito salvato', 'siti salvati')}. "
-                           "Vuoi importarli? Gruppi, cartelle, chiavi e password restano come in FileZilla.",
+        if n and tk_choice(self, "Ho trovato altri siti FTP", f"Sul computer c'è un altro programma FTP con {conta(n, 'sito salvato', 'siti salvati')}. "
+                           "Vuoi importarli? Gruppi, cartelle, chiavi e password restano come sono.",
                            [("Non ora", "ghost"), ("Importa i siti", "accent")], "server") == 1:
             self._import(path)
 
     def import_installed(self):
         path = filezilla.installed_sitemanager()
         if not path:
-            if tk_choice(self, "FileZilla non trovato", "Su questo computer non trovo i siti di FileZilla. "
+            if tk_choice(self, "Nessun sito trovato", "Su questo computer non trovo siti salvati da altri programmi FTP. "
                          "Vuoi scegliere un file sitemanager.xml?", [("No", "ghost"), ("Scegli il file", "accent")],
                          "info") == 1:
                 self.import_file()
@@ -1323,8 +1323,8 @@ class MainWindow(QMainWindow):
         self._import(path)
 
     def import_file(self):
-        path = QFileDialog.getOpenFileName(self, "Importa siti (FileZilla)", os.path.expanduser("~"),
-                                           "Siti FileZilla (*.xml);;Tutti i file (*)")[0]
+        path = QFileDialog.getOpenFileName(self, "Importa siti (file .xml)", os.path.expanduser("~"),
+                                           "Siti FTP (*.xml);;Tutti i file (*)")[0]
         if path:
             self._import(path)
 
@@ -1346,7 +1346,7 @@ class MainWindow(QMainWindow):
         added, updated = self.store.merge(res.sites)
         notes = []
         if res.locked:
-            notes.append(f"{conta(res.locked, 'password è protetta', 'password sono protette')} dalla password principale di FileZilla: "
+            notes.append(f"{conta(res.locked, 'password è protetta', 'password sono protette')} dalla password principale dell'altro programma: "
                          "inseriscile nel gestore siti.")
         if res.skipped:
             notes.append(f"{conta(res.skipped, 'sito con protocollo non supportato (HTTP, S3…) non importato', 'siti con protocolli non supportati (HTTP, S3…) non importati')}.")
@@ -1364,12 +1364,12 @@ class MainWindow(QMainWindow):
         if not self.store.sites:
             tk_info(self, APP_TITLE, "Non ci sono siti da esportare.")
             return
-        path = QFileDialog.getSaveFileName(self, "Esporta per FileZilla",
+        path = QFileDialog.getSaveFileName(self, "Esporta siti in file .xml",
                                            os.path.join(os.path.expanduser("~"), "Documents", "siti-tk-ftp.xml"),
-                                           "Siti FileZilla (*.xml)")[0]
+                                           "Siti FTP (*.xml)")[0]
         if not path:
             return
-        r = tk_choice(self, "Includere le password?", "FileZilla salva le password solo codificate (non cifrate): "
+        r = tk_choice(self, "Includere le password?", "Nel file .xml le password sono solo codificate (non cifrate): "
                       "chi ha il file le può leggere. Includile solo se il file resta al sicuro.",
                       [("Annulla", "ghost"), ("Senza password", "ghost"), ("Con le password", "accent")], "lock")
         if r <= 0:
@@ -1381,7 +1381,7 @@ class MainWindow(QMainWindow):
             tk_warn(self, APP_TITLE, f"Non riesco a scrivere il file:\n{exc}")
             return
         tk_info(self, "Esportazione completata", f"{conta(len(self.store.sites), 'sito', 'siti')} in\n{path}\n\n"
-                "In FileZilla: File → Importa. Dall'app tk-ftp sul telefono: Importa.")
+                "Si apre con Importa negli altri programmi FTP e nell'app tk-ftp sul telefono.")
 
     def _store_changed(self):
         self.t_logos.start()  # siti nuovi o cambiati (sito web, host, nome)

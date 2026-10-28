@@ -63,8 +63,8 @@ FTPS e SFTP con controllo di certificati e chiavi; mai la password in chiaro sen
 </td>
 <td width="50%" valign="top">
 
-### 📥&nbsp; Da FileZilla in un clic
-Importa i siti di FileZilla e condividili, cifrati, con l'app per il telefono.
+### 📥&nbsp; Da altri programmi FTP in un clic
+Importa i siti salvati in altri programmi FTP e condividili, cifrati, con l'app per il telefono.
 
 </td>
 </tr>

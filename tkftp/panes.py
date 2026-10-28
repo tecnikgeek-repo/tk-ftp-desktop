@@ -563,7 +563,7 @@ class RemotePane(Pane):
         row = QHBoxLayout()
         row.addStretch(1)
         self.btn_open_sites = text_btn("server", "Apri il gestore siti", None, "#fff", "accent")
-        self.btn_import_fz = text_btn("import", "Importa da FileZilla", None, NAVY, "")
+        self.btn_import_fz = text_btn("import", "Importa siti", None, NAVY, "")
         row.addWidget(self.btn_open_sites)
         row.addWidget(self.btn_import_fz)
         row.addStretch(1)

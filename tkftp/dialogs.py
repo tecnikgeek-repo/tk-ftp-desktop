@@ -284,8 +284,8 @@ class SettingsDialog(TkDialog):
         grid.addWidget(c3, 1, 0)
 
         c4, v4 = card("SITI CONDIVISI COL TELEFONO")
-        hint = QLabel("tk-ftp tiene i siti anche in una cartella condivisa (per esempio Dropbox), nel file "
-                      "«tk-ftp-siti.xml» in formato FileZilla: dall'app tk-ftp sul telefono lo apri con Importa.")
+        hint = QLabel("tk-ftp tiene i siti anche in una cartella condivisa (per esempio una cartella nel cloud), nel file "
+                      "«tk-ftp-siti.xml»: dall'app tk-ftp sul telefono lo apri con Importa.")
         hint.setWordWrap(True)
         hint.setObjectName("asub")
         v4.addWidget(hint)
@@ -357,7 +357,7 @@ class SettingsDialog(TkDialog):
 
     def _pick_shared(self):
         start = self.shared.text() or os.path.join(os.path.expanduser("~"), "Dropbox")
-        path = QFileDialog.getExistingDirectory(self, "Cartella condivisa (es. Dropbox)",
+        path = QFileDialog.getExistingDirectory(self, "Cartella condivisa (es. una cartella nel cloud)",
                                                 start if os.path.isdir(start) else os.path.expanduser("~"))
         if path:
             self.shared.setText(os.path.normpath(path))
