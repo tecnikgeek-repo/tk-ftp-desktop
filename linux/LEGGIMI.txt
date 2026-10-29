@@ -1,0 +1,37 @@
+tk-ftp per Linux — installazione
+================================
+
+Funziona su Ubuntu 22.04 o più recente (e sulle distribuzioni simili), computer a 64 bit (x86_64).
+
+1. Scarica il file «tk-ftp-<versione>-linux-x86_64.AppImage» e mettilo dove vuoi tenerlo,
+   per esempio nella cartella «Applicazioni» della tua home.
+2. Rendilo avviabile: tasto destro sul file → Proprietà → attiva «Esegui come programma»
+   (oppure da Terminale: chmod +x tk-ftp-*.AppImage).
+3. Aprilo con un doppio clic. Al primo avvio tk-ftp si aggiunge da solo al menu delle applicazioni,
+   con la sua icona: dalla volta dopo lo trovi lì.
+
+Se non si apre e il Terminale dice che manca FUSE: sudo apt install fuse3 (su Ubuntu c'è già).
+
+Software libero
+tk-ftp è gratuito, con tutte le funzioni, ed è software libero: licenza GNU AGPL-3.0, senza alcuna
+garanzia. Codice sorgente: https://github.com/tecnikgeek-repo/tk-ftp-desktop
+Le licenze di tk-ftp e dei componenti inclusi (Python, Qt, paramiko…) sono nel programma: Informazioni →
+«Licenze e codice sorgente».
+Il nome tk-ftp e il logo non sono coperti dalla licenza: una versione modificata deve avere un nome diverso.
+
+I tuoi dati (restano sul computer)
+- Siti, impostazioni e chiavi dei server: ~/.local/share/tk-ftp
+- Le password stanno nel portachiavi del sistema («Password e chiavi»), mai in chiaro su disco.
+- Se sul computer c'è FileZilla, al primo avvio tk-ftp propone di importare i siti.
+- Aggiornamenti: tk-ftp sostituisce da solo il file AppImage con la versione nuova (firmata).
+- Per togliere tutto: cancella il file AppImage (la voce del menu sparisce), la cartella
+  ~/.local/share/tk-ftp e, in «Password e chiavi», le voci «tk-ftp».
+
+Cosa va in rete
+- I server FTP/SFTP che scegli tu (se un server non accetta TLS, tk-ftp chiede prima di mandare la
+  password in chiaro).
+- pietrodefilippis.it per controllare se c'è una versione nuova (aggiornamenti firmati).
+- Il sito web dei tuoi siti, per prendere il loro logo (si spegne nelle Impostazioni).
+- Statistiche anonime SOLO se lo consenti (benvenuto o Impostazioni).
+
+Creato da TecnikGeek — https://pietrodefilippis.it

@@ -27,7 +27,7 @@ jobs:
         env:
           APPIMAGE_EXTRACT_AND_RUN: '1'
         run: |
-          dbus-run-session -- bash -c 'printf "" | gnome-keyring-daemon --unlock --components=secrets >/dev/null && bash linux/build_linux.sh'
+          dbus-run-session -- bash -c 'printf "prova-ci" | gnome-keyring-daemon --unlock --components=secrets >/dev/null && bash linux/build_linux.sh'
       # l'AppImage va nella release del repo (lo spazio degli artifact di Actions è condiviso e si riempie);
       # la release si crea solo da main: le prove sui rami non devono comparire pubbliche
       - name: Carica l'AppImage nella release
