@@ -4,8 +4,6 @@ name: Build Linux
 # Runner ubuntu-22.04: l'AppImage chiede la glibc della macchina di build, così gira da Ubuntu 22.04 in su.
 on:
   workflow_dispatch:
-  push:  # PROVVISORIO: prova della libreria comune dal ramo linux, da togliere
-    branches: ['linux']
 
 permissions:
   contents: write
