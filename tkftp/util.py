@@ -1,4 +1,4 @@
-"""Percorsi, impostazioni e piccole utilità di sistema (Windows e Mac)."""
+"""Percorsi, impostazioni e piccole utilità di sistema (Windows, Mac e Linux)."""
 import json
 import os
 import subprocess
@@ -8,6 +8,14 @@ import threading
 APP_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IS_MAC = sys.platform == "darwin"
 IS_WIN = sys.platform == "win32"
+IS_LINUX = sys.platform.startswith("linux")
+
+from tkftp import tk_linux  # noqa: E402  (libreria comune dei software TK)
+from tkftp.tk_linux import appimage_path, system_env  # noqa: E402,F401
+
+# dove stanno le password, per i testi dell'interfaccia
+VAULT_NAME = ("Gestione credenziali di Windows" if IS_WIN else "Portachiavi del Mac" if IS_MAC
+              else tk_linux.NOME_PORTACHIAVI)
 
 
 def mac_bundle_path():
@@ -19,9 +27,11 @@ def mac_bundle_path():
 
 
 def is_installed():
-    """True se gira dal pacchetto (Windows: cartella «app» col Python incluso; Mac: bundle .app)."""
+    """True se gira dal pacchetto (Windows: cartella «app» col Python incluso; Mac: bundle .app; Linux: AppImage)."""
     if IS_MAC:
         return bool(getattr(sys, "frozen", False) and mac_bundle_path())
+    if IS_LINUX:
+        return bool(appimage_path())
     bundled = os.path.join(APP_ROOT, "python")
     return (os.path.isfile(os.path.join(bundled, "pythonw.exe"))
             and os.path.normcase(os.path.abspath(sys.base_prefix)) == os.path.normcase(bundled))
@@ -43,8 +53,8 @@ _DATA = None
 
 def data_dir():
     """Dati del programma (siti, impostazioni, chiavi dei server). Windows: «Dati» accanto ad «app»;
-    Mac: Libreria/Application Support/tk-ftp. Gli aggiornamenti non la toccano. Le password NON stanno qui:
-    vanno in Gestione credenziali di Windows / Portachiavi del Mac."""
+    Mac: Libreria/Application Support/tk-ftp; Linux: ~/.local/share/tk-ftp. Gli aggiornamenti non la toccano.
+    Le password NON stanno qui: vanno in Gestione credenziali di Windows / Portachiavi del Mac / portachiavi di Linux."""
     global _DATA
     if _DATA:
         return _DATA
@@ -53,6 +63,8 @@ def data_dir():
         path = override
     elif IS_MAC:
         path = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "tk-ftp")
+    elif IS_LINUX:
+        path = tk_linux.cartella_dati("tk-ftp")
     else:
         base = os.path.dirname(APP_ROOT) if is_installed() else APP_ROOT
         path = os.path.join(base, "Dati")
@@ -152,31 +164,35 @@ def open_path(path):
     elif IS_MAC:
         subprocess.Popen(["open", path])
     else:
-        subprocess.Popen(["xdg-open", path])
+        tk_linux.apri(path)
 
 
 def reveal(path):
-    """Mostra il file nell'Esplora file / nel Finder."""
+    """Mostra il file nell'Esplora file / nel Finder / nel file manager."""
     if IS_WIN:
         subprocess.Popen(["explorer", "/select,", os.path.normpath(path)])
     elif IS_MAC:
         subprocess.Popen(["open", "-R", path])
     else:
-        subprocess.Popen(["xdg-open", os.path.dirname(path)])
+        tk_linux.mostra_nel_file_manager(path)
 
 
 def open_in_editor(path, editor=""):
     """Apre il file per modificarlo: con l'editor scelto nelle impostazioni, altrimenti con quello del sistema.
     Su Windows prova il verbo «Modifica» (così un .html non finisce nel browser); «Apri» solo per i file che non sono
     né testo né programmi/script (immagini, documenti), perché su uno script «Apri» vuol dire eseguirlo; se no il
-    Blocco note. Sul Mac testo e script vanno nell'editor di testo («open -t»), mai eseguiti."""
+    Blocco note. Sul Mac testo e script vanno nell'editor di testo («open -t»), mai eseguiti. Su Linux testo e
+    script vanno nell'editor di testo predefinito (quello di text/plain), il resto col programma predefinito."""
     from tkftp.listing import TEXT_EXT
     as_text = is_dangerous(path) or _ext(path) in TEXT_EXT or _ext(path) == ""
     if editor:
         if IS_MAC and editor.endswith(".app"):
             subprocess.Popen(["open", "-a", editor, path])
         else:
-            subprocess.Popen([editor, path])
+            subprocess.Popen([editor, path], env=system_env(), start_new_session=IS_LINUX)
+        return
+    if IS_LINUX:
+        (tk_linux.apri_come_testo if as_text else tk_linux.apri)(path)
         return
     if IS_WIN:
         for verb in (("edit",) if as_text else ("edit", "open")):
@@ -275,6 +291,18 @@ def ensure_folder_shortcut():
     if not IS_WIN:
         return ""
     return _make_shortcut("'" + os.path.dirname(APP_ROOT).replace("'", "''") + "'")
+
+
+LINUX_DESKTOP_ID = "tk-ftp"  # nome del file .desktop = app_id della finestra su Wayland (icona nella barra)
+
+
+def install_linux_menu():
+    """Linux: voce «tk-ftp» nel menu delle applicazioni con l'icona (si corregge da sola se l'AppImage si sposta)."""
+    from tkftp import APP_TITLE
+    icon = os.path.join(getattr(sys, "_MEIPASS", APP_ROOT), "assets", "tk-ftp-512.png")
+    return tk_linux.installa_menu(LINUX_DESKTOP_ID, APP_TITLE, "Client FTP, FTPS e SFTP con due pannelli (TecnikGeek)",
+                                  "Network;FileTransfer;", icon, nome_generico="Client FTP",
+                                  parole="ftp;sftp;ftps;server;trasferimento;")
 
 
 def update_uninstall_entry():

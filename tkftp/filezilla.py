@@ -268,7 +268,7 @@ def build(sites, passwords=None, include_passwords=False, phrase=None):
     """Crea il documento. passwords: dict id → password. Con phrase le password si cifrano (TkPass),
     altrimenti, se include_passwords, vanno in base64 come fa FileZilla."""
     passwords = passwords or {}
-    root = ET.Element("FileZilla3", {"version": "3.70.6", "platform": "windows" if IS_WIN else "mac"})
+    root = ET.Element("FileZilla3", {"version": "3.70.6", "platform": "windows" if IS_WIN else "mac" if IS_MAC else "linux"})
     key = None
     if phrase:
         salt = os.urandom(16)

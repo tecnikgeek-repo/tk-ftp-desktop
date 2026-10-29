@@ -34,7 +34,7 @@ from tkftp.style import (
     text_btn, tk_choice, tk_info, tk_input, tk_warn, tool_btn,
 )
 from tkftp.util import (
-    APP_ROOT, IS_WIN, Settings, clean_edit_dir, data_dir, ensure_folder_shortcut, human_size, human_speed,
+    APP_ROOT, IS_LINUX, IS_WIN, VAULT_NAME, Settings, clean_edit_dir, data_dir, ensure_folder_shortcut, human_size, human_speed,
     is_dangerous, is_installed, is_text_file, log_dir, open_in_editor, open_path, reveal, update_uninstall_entry,
 )
 
@@ -43,7 +43,7 @@ RIGHE_BENVENUTO = (
     "tk-ftp si collega solo ai server che scegli tu. In più va in rete per cercare gli aggiornamenti "
     "(su pietrodefilippis.it) e, se l'opzione è accesa nelle Impostazioni, per prendere il logo dei tuoi siti dal "
     "loro sito web.",
-    "Le password dei siti stanno in " + ("Gestione credenziali di Windows" if IS_WIN else "Portachiavi del Mac") +
+    "Le password dei siti stanno in " + VAULT_NAME +
     ", mai in chiaro su disco.",
 )
 
@@ -346,7 +346,7 @@ class MainWindow(QMainWindow):
         self.log_view = QPlainTextEdit(objectName="log")
         self.log_view.setReadOnly(True)
         self.log_view.setMaximumBlockCount(5000)
-        self.log_view.setFont(QFont("Consolas" if IS_WIN else "Menlo", 9))
+        self.log_view.setFont(QFont("Consolas" if IS_WIN else "DejaVu Sans Mono" if IS_LINUX else "Menlo", 9))
         self.bstack.addWidget(self.log_view)
         v.addWidget(self.bstack, 1)
         self.tabs["coda"][0].setChecked(True)
@@ -1451,8 +1451,8 @@ class MainWindow(QMainWindow):
 
     def _informazioni(self):
         from tkftp.tk_licenza_qt import InformazioniDialog
-        from tkftp.util import IS_MAC, licenses_dir
-        dove = "Gestione credenziali di Windows" if IS_WIN else "Portachiavi del Mac" if IS_MAC else "portachiavi"
+        from tkftp.util import licenses_dir
+        dove = VAULT_NAME
         return InformazioniDialog(
             pro.licenza(), APP_TITLE, VERSION, "Client FTP, FTPS e SFTP con due pannelli, coda dei trasferimenti e "
             "modifica al volo.", logo_tile(136), "#d97706",
@@ -1471,6 +1471,11 @@ class MainWindow(QMainWindow):
         tk_info(self, APP_TITLE, f"Icona creata sul Desktop:\n{path}")
 
     def ensure_shortcut(self):
+        if IS_LINUX and is_installed():
+            # voce nel menu delle applicazioni con l'icona (si corregge da sola se il file AppImage è stato spostato)
+            from tkftp.util import install_linux_menu
+            threading.Thread(target=lambda: _quiet(install_linux_menu), daemon=True).start()
+            return
         if not IS_WIN or not is_installed():
             return
         update_uninstall_entry()
@@ -1613,6 +1618,13 @@ class MainWindow(QMainWindow):
         e.accept()
 
 
+def _quiet(fn):
+    try:
+        fn()
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def _rename_over(c, src, dst):
     """Rinomina sopra un file che esiste (l'utente ha confermato): se il server non sovrascrive da solo,
     prima toglie quello vecchio."""
@@ -1743,6 +1755,9 @@ def main():
     # memoria del programma (benvenuto, consenso alle statistiche, invito al caffè): nessuna funzione a pagamento
     app.licenza = pro.crea_licenza(VERSION)
     app.setApplicationName(APP_TITLE)
+    if IS_LINUX:
+        from tkftp.util import LINUX_DESKTOP_ID
+        app.setDesktopFileName(LINUX_DESKTOP_ID)  # Wayland: la barra delle applicazioni trova l'icona dal .desktop
     app.setStyle("Fusion")
     import PySide6
     from PySide6.QtCore import QLibraryInfo, QTranslator

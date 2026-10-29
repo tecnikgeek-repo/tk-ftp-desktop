@@ -1,6 +1,7 @@
 pyside6-essentials==6.11.2
 paramiko>=5
 certifi
+secretstorage; sys_platform == "linux"  # portachiavi di Linux (Secret Service)
 # solo per i collaudo (server di prova locali)
 pyftpdlib
 pyopenssl

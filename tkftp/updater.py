@@ -1,5 +1,5 @@
 """Aggiornamenti automatici (come tk-listino): manifest sul server, download verificato (SHA-256) e sostituzione
-della cartella «app» (Windows) o del bundle (Mac)."""
+della cartella «app» (Windows), del bundle (Mac) o del file AppImage (Linux)."""
 import hashlib
 import json
 import os
@@ -12,7 +12,8 @@ import urllib.request
 
 from tkftp import VERSION
 from tkftp.tk_aggiornamento import asset_valido
-from tkftp.util import APP_ROOT, IS_MAC, log_dir, mac_bundle_path
+from tkftp import tk_linux
+from tkftp.util import APP_ROOT, IS_LINUX, IS_MAC, log_dir, mac_bundle_path
 
 def _codice_conteggio():
     """«; <codice>» per il manifest: conta l'installazione una volta sola anche se cambia rete (Privacy 4-ter)."""
@@ -110,6 +111,8 @@ echo "fine"
 def platform_key():
     if IS_MAC:
         return "mac-arm64" if platform.machine() == "arm64" else "mac-x86_64"
+    if IS_LINUX:
+        return tk_linux.chiave_piattaforma()
     return "windows"
 
 
@@ -200,6 +203,9 @@ def apply_update(path, relaunch=True, new_version=""):
         subprocess.Popen(["/bin/bash", script, str(os.getpid()), path, bundle, "1" if relaunch else "0", log],
                          start_new_session=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                          stderr=subprocess.DEVNULL)
+        return
+    if IS_LINUX:
+        tk_linux.applica_aggiornamento(path, download_dir(), os.path.join(log_dir(), "aggiornamento.log"), relaunch)
         return
     script = os.path.join(download_dir(), "applica-aggiornamento.cmd")
     with open(script, "w", encoding="ascii", errors="replace", newline="\r\n") as fh:

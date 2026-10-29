@@ -18,6 +18,8 @@ def crea_licenza(versione):
             base = os.environ["TKFTP_DATI"]
         elif sys.platform == "darwin":
             base = os.path.expanduser("~/Library/Application Support")
+        elif sys.platform.startswith("linux"):
+            base = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
         else:
             base = os.environ.get("APPDATA") or os.path.expanduser("~")
         return Licenza("tk-ftp", versione, os.path.join(base, "tk-ftp"))

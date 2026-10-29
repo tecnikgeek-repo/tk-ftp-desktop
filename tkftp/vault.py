@@ -1,11 +1,14 @@
 """Password dei siti e frase segreta della cartella condivisa: mai in chiaro su disco.
 Windows: Gestione credenziali (credenziali generiche «tk-ftp:…», legate all'utente di Windows).
-Mac: Portachiavi (servizio «tk-ftp»), scritto con «security -i» così la password non compare tra gli argomenti."""
+Mac: Portachiavi (servizio «tk-ftp»), scritto con «security -i» così la password non compare tra gli argomenti.
+Linux: portachiavi del sistema via Secret Service (GNOME «Password e chiavi», KDE Wallet…), libreria secretstorage
+inclusa nel pacchetto: niente programmi da installare. Voci con attributi service=«tk-ftp», account=<voce>."""
 import base64
 import os
 import subprocess
 
-from tkftp.util import IS_MAC, IS_WIN
+from tkftp import tk_linux
+from tkftp.util import IS_LINUX, IS_MAC, IS_WIN
 
 SERVICE = os.environ.get("TKFTP_VAULT_SERVICE", "tk-ftp")  # i test usano un nome loro, mai quello vero
 
@@ -64,6 +67,9 @@ def set_secret(account, secret):
         if r.returncode != 0 or "error" in (r.stderr or "").lower():
             raise OSError("Portachiavi: scrittura non riuscita " + (r.stderr or "").strip()[:200])
         return
+    if IS_LINUX:
+        tk_linux.scrivi_segreto(SERVICE, account, raw, f"tk-ftp: {account}")
+        return
     raise OSError("portachiavi non disponibile su questo sistema")
 
 
@@ -91,6 +97,9 @@ def get_secret(account):
             except Exception:
                 return None
         return out
+    if IS_LINUX:
+        data = tk_linux.leggi_segreto(SERVICE, account)
+        return data.decode("utf-8", "replace") if data is not None else None
     return None
 
 
@@ -116,6 +125,8 @@ def purge_service():
                              timeout=20).returncode == 0 and n < 500:
             n += 1
         return n
+    if IS_LINUX:
+        return tk_linux.cancella_servizio(SERVICE)
     return 0
 
 
@@ -126,3 +137,6 @@ def delete_secret(account):
     if IS_MAC:
         subprocess.run(["security", "delete-generic-password", "-s", SERVICE, "-a", account],
                        capture_output=True, timeout=20)
+        return
+    if IS_LINUX:
+        tk_linux.cancella_segreto(SERVICE, account)

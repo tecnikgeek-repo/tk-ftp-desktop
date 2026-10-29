@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
 from tkftp import APP_TITLE, VERSION
 from tkftp.listing import octal_to_perms, perms_to_octal
 from tkftp.style import ACCENT, TkDialog, ic, kind_badge, logo_tile, text_btn, tk_warn
-from tkftp.util import IS_MAC, human_size
+from tkftp.util import IS_LINUX, IS_MAC, human_size
 
 
 PHRASE_MIN = 12  # frase segreta della cartella condivisa: minimo per quelle nuove
@@ -348,6 +348,9 @@ class SettingsDialog(TkDialog):
         if IS_MAC:
             path = QFileDialog.getOpenFileName(self, "Scegli il programma per modificare i file", "/Applications",
                                                "Applicazioni (*.app)")[0]
+        elif IS_LINUX:
+            path = QFileDialog.getOpenFileName(self, "Scegli il programma per modificare i file", "/usr/bin",
+                                               "Programmi (*)")[0]
         else:
             start = os.environ.get("ProgramFiles", "C:\\")
             path = QFileDialog.getOpenFileName(self, "Scegli il programma per modificare i file", start,

@@ -2,6 +2,7 @@
 a mano (niente emoji), finestre di dialogo nel nostro stile e ponte thread → interfaccia."""
 import math
 import os
+import sys
 
 from PySide6.QtCore import QObject, QPointF, QRectF, QSize, Qt, Signal, Slot
 from PySide6.QtGui import QBrush, QColor, QFont, QIcon, QImage, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap
@@ -82,7 +83,7 @@ QPushButton#recent:hover {{ border-color:{ACCENT}; background:{ACCENT_LL}; }}
 QLineEdit, QSpinBox, QComboBox, QPlainTextEdit#notes {{ background:{GRAY_50}; border:1px solid {GRAY_200}; border-radius:10px; padding:0 12px; min-height:36px; selection-background-color:{ACCENT}; }}
 QPlainTextEdit#notes {{ padding:6px 10px; }}
 QLineEdit:focus, QSpinBox:focus, QComboBox:focus, QPlainTextEdit#notes:focus {{ background:#fff; border:1px solid {ACCENT}; }}
-QLineEdit#path {{ background:{GRAY_50}; font-family:Consolas,'SF Mono',Menlo,monospace; font-size:12px; }}
+QLineEdit#path {{ background:{GRAY_50}; font-family:Consolas,'SF Mono',Menlo,'DejaVu Sans Mono',monospace; font-size:12px; }}
 QLineEdit#qc {{ background:rgba(255,255,255,.95); border:0; border-radius:9px; min-height:32px; padding:0 10px; }}
 QLineEdit#qc:focus {{ background:#fff; }}
 QComboBox#qc {{ background:rgba(255,255,255,.95); border:0; border-radius:9px; min-height:32px; padding:0 10px; font-weight:700; }}
@@ -102,7 +103,7 @@ QHeaderView {{ background:transparent; }}
 QHeaderView::section {{ background:{GRAY_50}; border:0; border-bottom:1px solid {GRAY_200}; padding:7px 6px; color:{GRAY_500}; font-size:11px; font-weight:800; }}
 QHeaderView::section:hover {{ color:{NAVY}; }}
 QSplitter::handle {{ background:transparent; }}
-QPlainTextEdit#log {{ background:{NAVY}; color:#e2e8f0; border:0; border-radius:12px; padding:8px 10px; font-family:Consolas,'SF Mono',Menlo,monospace; font-size:12px; selection-background-color:{ACCENT_D}; }}
+QPlainTextEdit#log {{ background:{NAVY}; color:#e2e8f0; border:0; border-radius:12px; padding:8px 10px; font-family:Consolas,'SF Mono',Menlo,'DejaVu Sans Mono',monospace; font-size:12px; selection-background-color:{ACCENT_D}; }}
 QMenu {{ background:#fff; border:1px solid {GRAY_200}; border-radius:12px; padding:6px; }}
 QMenu::item {{ padding:7px 26px 7px 12px; border-radius:8px; }}
 QMenu::item:selected {{ background:{ACCENT_L}; color:{NAVY}; }}
@@ -128,7 +129,7 @@ QFrame#tkcard QLabel {{ color:#fff; }}
 QFrame#tkcard QFrame#acard {{ background:{NAVY_2}; border-radius:14px; }}
 QFrame#tkcard QLabel#atitle {{ color:{ACCENT}; font-size:11px; font-weight:800; letter-spacing:1.5px; }}
 QFrame#tkcard QLabel#asub {{ color:{GRAY_300}; }}
-QFrame#tkcard QLabel#mono {{ font-family:Consolas,'SF Mono',Menlo,monospace; font-size:12px; color:#fde68a; }}
+QFrame#tkcard QLabel#mono {{ font-family:Consolas,'SF Mono',Menlo,'DejaVu Sans Mono',monospace; font-size:12px; color:#fde68a; }}
 QFrame#tkcard QLineEdit, QFrame#tkcard QSpinBox, QFrame#tkcard QComboBox {{ background:{NAVY_2}; border:1px solid {NAVY_3}; color:#fff; }}
 QFrame#tkcard QLineEdit:focus, QFrame#tkcard QSpinBox:focus, QFrame#tkcard QComboBox:focus {{ border:1px solid {ACCENT}; background:#26344d; }}
 QFrame#tkcard QComboBox QAbstractItemView {{ background:{NAVY_2}; color:#fff; border:1px solid {NAVY_3}; selection-background-color:{ACCENT_D}; selection-color:#fff; }}
@@ -496,7 +497,7 @@ def shadow_holder(card, left=12, top=4, right=12, bottom=16):
 
 
 def mono_font(size=10):
-    f = QFont("Consolas")
+    f = QFont("Consolas" if sys.platform == "win32" else "Menlo" if sys.platform == "darwin" else "DejaVu Sans Mono")
     f.setStyleHint(QFont.StyleHint.Monospace)
     f.setPointSize(size)
     return f

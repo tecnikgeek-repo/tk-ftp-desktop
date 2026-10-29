@@ -7,7 +7,7 @@ Il nome "tk-ftp" e il logo non sono coperti dalla licenza (AGPL sez. 7): una ver
 deve avere un nome diverso.
 
 Il programma contiene questi componenti di terze parti, ognuno con la sua licenza. Le versioni sono quelle
-del pacchetto per Windows; il pacchetto per Mac puo' avere versioni di poco diverse (stesse licenze).
+del pacchetto per Windows; i pacchetti per Mac e Linux possono avere versioni di poco diverse (stesse licenze).
 I testi completi delle licenze sono in questa cartella: quelli generici (LGPL-3.0.txt, GPL-3.0.txt,
 LGPL-2.1.txt, Apache-2.0.txt, MPL-2.0.txt, Python-PSF.txt) e quelli originali dei pacchetti
 (file "<pacchetto>-LICENSE...", copiati al momento della creazione del pacchetto).
@@ -29,8 +29,12 @@ bcrypt              5.0.0          Apache-2.0                      https://pypi.
 PyNaCl              1.6.2          Apache-2.0 (libsodium: ISC)     https://pypi.org/project/PyNaCl/
 cffi                2.1.1          MIT-0                           https://pypi.org/project/cffi/
 certifi             2026.10.18     MPL-2.0 (MPL-2.0.txt)           https://pypi.org/project/certifi/
+SecretStorage       3.5            BSD-3-Clause (solo Linux)       https://pypi.org/project/SecretStorage/
+jeepney             0.9            MIT (solo Linux)                https://pypi.org/project/jeepney/
+libxcb-cursor       0.1            MIT/X11 (solo Linux)            https://gitlab.freedesktop.org/xorg/lib/libxcb-cursor
 
 Qt e PySide6 (LGPL): nel pacchetto per Windows le librerie Qt sono file separati (cartella
 app\python\Lib\site-packages\PySide6) e si possono sostituire con una versione compatibile ricompilata.
-Sul Mac sono nel bundle (tk-ftp.app/Contents/Frameworks). Per avere i sorgenti di tutti i componenti
+Sul Mac sono nel bundle (tk-ftp.app/Contents/Frameworks); su Linux dentro il file AppImage
+(si estrae con «tk-ftp-….AppImage --appimage-extract», cartella usr/lib/tk-ftp/_internal). Per avere i sorgenti di tutti i componenti
 basta seguire i link qui sopra; per qualsiasi richiesta: https://pietrodefilippis.it/contatti
