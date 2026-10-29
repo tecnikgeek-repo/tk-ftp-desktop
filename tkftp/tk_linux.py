@@ -2,8 +2,10 @@
 
 Copia IDENTICA in ogni software TK accanto a tk_aggiornamento.py (originale in Dropbox\\CLAUDE\\tk-software\\librerie).
 Si importa anche su Windows e Mac (non fa niente): le funzioni vanno chiamate solo se IS_LINUX.
-Nel pacchetto servono secretstorage + jeepney (portachiavi) e i file .desktop si scrivono in ~/.local/share.
-Modello: tk-ftp-desktop (linux/build_linux.sh, linux/<nome>-linux.spec).
+Nel pacchetto servono secretstorage + jeepney (portachiavi, salvaschermo) e i file .desktop si scrivono in
+~/.local/share. Per i link aperti da Qt c'è tk_linux_qt.py. Modello: tk-ftp-desktop (linux/build_linux.sh,
+linux/<nome>-linux.spec). Versione 2 (29/10/2026): cartelle dell'utente, tipi di file, avvio automatico,
+salvaschermo, XWayland.
 """
 import os
 import subprocess
@@ -24,9 +26,38 @@ def xdg_data_home():
     return os.environ.get("XDG_DATA_HOME") or os.path.join(os.path.expanduser("~"), ".local", "share")
 
 
+def xdg_config_home():
+    return os.environ.get("XDG_CONFIG_HOME") or os.path.join(os.path.expanduser("~"), ".config")
+
+
 def cartella_dati(nome):
     """~/.local/share/<nome>: dati del programma (gli aggiornamenti non la toccano)."""
     return os.path.join(xdg_data_home(), nome)
+
+
+def cartella_utente(chiave):
+    """Cartella dell'utente col nome della sua lingua, da ~/.config/user-dirs.dirs (in italiano «Documenti»,
+    «Scrivania», «Scaricati»…). chiave = DOCUMENTS, DESKTOP, DOWNLOAD, PICTURES, VIDEOS, MUSIC. "" se manca."""
+    casa = os.path.expanduser("~")
+    try:
+        with open(os.path.join(xdg_config_home(), "user-dirs.dirs"), "r", encoding="utf-8") as fh:
+            for riga in fh:
+                riga = riga.strip()
+                if riga.startswith(f"XDG_{chiave}_DIR="):
+                    valore = riga.split("=", 1)[1].strip().strip('"').replace("$HOME", casa)
+                    if os.path.isdir(valore) and os.path.abspath(valore) != os.path.abspath(casa):
+                        return valore
+    except OSError:
+        pass
+    return ""
+
+
+def scegli_xwayland():
+    """Da chiamare prima di creare QApplication, solo per i programmi che agganciano altro a una finestra X11
+    (es. il video di VLC) o posizionano finestre sopra altre: su Wayland puro non si può. Su GNOME/KDE con
+    Wayland c'è sempre XWayland (DISPLAY impostato). Non decide se l'utente ha già scelto con QT_QPA_PLATFORM."""
+    if IS_LINUX and not os.environ.get("QT_QPA_PLATFORM") and os.environ.get("DISPLAY"):
+        os.environ["QT_QPA_PLATFORM"] = "xcb"
 
 
 # --------------------------------------------------------------------------- programmi del sistema
@@ -97,6 +128,61 @@ def apri_come_testo(path):
 
 
 # --------------------------------------------------------------------------- voce nel menu
+def exec_desktop(path):
+    """Percorso tra virgolette per la riga Exec di un file .desktop (specifica freedesktop)."""
+    for c in ("\\", '"', "`", "$"):
+        path = path.replace(c, "\\" + c)
+    return f'"{path}"'
+
+
+def _misura_png(path):
+    """Lato dell'icona PNG (dall'intestazione), per metterla nella cartella hicolor giusta; 512 se non si legge."""
+    try:
+        with open(path, "rb") as fh:
+            testa = fh.read(24)
+        if testa[:8] == b"\x89PNG\r\n\x1a\n":
+            return int.from_bytes(testa[16:20], "big") or 512
+    except OSError:
+        pass
+    return 512
+
+
+def _copia_icona(icona_png, tipo, nome):
+    """Icona in ~/.local/share/icons/hicolor/<lato>x<lato>/<tipo>/<nome>.png (tipo = apps o mimetypes)."""
+    if not os.path.isfile(icona_png):
+        return
+    import shutil
+    lato = _misura_png(icona_png)
+    cartella = os.path.join(xdg_data_home(), "icons", "hicolor", f"{lato}x{lato}", tipo)
+    os.makedirs(cartella, exist_ok=True)
+    shutil.copyfile(icona_png, os.path.join(cartella, nome + ".png"))
+
+
+def _scrivi_se_cambia(path, testo, eseguibile=False):
+    """Scrittura atomica solo se il contenuto è diverso. True se ha scritto."""
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            if fh.read() == testo:
+                return False
+    except OSError:
+        pass
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path + ".tmp", "w", encoding="utf-8") as fh:
+        fh.write(testo)
+    if eseguibile:
+        os.chmod(path + ".tmp", 0o755)
+    os.replace(path + ".tmp", path)
+    return True
+
+
+def _esegui_piano(cmd):
+    """Comando di sistema breve, con l'ambiente pulito; None se non c'è o non risponde."""
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=30, env=system_env())
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
 def installa_menu(desktop_id, nome, commento, categorie, icona_png, nome_generico="", parole="", mime=""):
     """Voce nel menu delle applicazioni con l'icona, che punta al file AppImage dove si trova ora: se l'utente lo
     sposta si corregge al prossimo avvio, se lo cancella la voce sparisce (TryExec). Ritorna il .desktop o ""."""
@@ -104,44 +190,121 @@ def installa_menu(desktop_id, nome, commento, categorie, icona_png, nome_generic
     if not IS_LINUX or not appimage:
         return ""
     base = xdg_data_home()
-    icon_dir = os.path.join(base, "icons", "hicolor", "512x512", "apps")
-    os.makedirs(icon_dir, exist_ok=True)
-    if os.path.isfile(icona_png):
-        import shutil
-        shutil.copyfile(icona_png, os.path.join(icon_dir, desktop_id + ".png"))
+    _copia_icona(icona_png, "apps", desktop_id)
     apps = os.path.join(base, "applications")
-    os.makedirs(apps, exist_ok=True)
-    exe = appimage.replace("\\", "\\\\").replace('"', '\\"')
     righe = ["[Desktop Entry]", "Type=Application", f"Name={nome}"]
     if nome_generico:
         righe.append(f"GenericName={nome_generico}")
-    righe += [f"Comment={commento}", f'Exec="{exe}" %U', f"TryExec={appimage}", f"Icon={desktop_id}",
-              "Terminal=false", f"Categories={categorie}"]
+    righe += [f"Comment={commento}", f"Exec={exec_desktop(appimage)} %U", f"TryExec={appimage}",
+              f"Icon={desktop_id}", "Terminal=false", f"Categories={categorie}"]
     if parole:
         righe.append(f"Keywords={parole}")
     if mime:
-        righe.append(f"MimeType={mime}")
+        righe.append(f"MimeType={mime.rstrip(';')};")
     righe += [f"StartupWMClass={desktop_id}", "X-TecnikGeek=1"]
-    text = "\n".join(righe) + "\n"
     path = os.path.join(apps, desktop_id + ".desktop")
-    try:
-        with open(path, "r", encoding="utf-8") as fh:
-            if fh.read() == text:
-                return path
-    except OSError:
-        pass
-    tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as fh:
-        fh.write(text)
-    os.chmod(tmp, 0o755)
-    os.replace(tmp, path)
-    for cmd in (["update-desktop-database", "-q", apps],
-                ["gtk-update-icon-cache", "-q", "-t", "-f", os.path.join(base, "icons", "hicolor")]):
-        try:
-            subprocess.run(cmd, capture_output=True, timeout=20, env=system_env())
-        except (OSError, subprocess.SubprocessError):
-            pass
+    if _scrivi_se_cambia(path, "\n".join(righe) + "\n", eseguibile=True):
+        _esegui_piano(["update-desktop-database", "-q", apps])
+        _esegui_piano(["gtk-update-icon-cache", "-q", "-t", "-f", os.path.join(base, "icons", "hicolor")])
     return path
+
+
+def togli_menu(desktop_id):
+    """Contrario di installa_menu (per «Cancella tutto»): voce, icone e avvio automatico."""
+    import glob
+    base = xdg_data_home()
+    for p in ([os.path.join(base, "applications", desktop_id + ".desktop"),
+               os.path.join(xdg_config_home(), "autostart", desktop_id + ".desktop")]
+              + glob.glob(os.path.join(base, "icons", "hicolor", "*", "apps", desktop_id + ".png"))):
+        try:
+            os.remove(p)
+        except OSError:
+            pass
+
+
+def registra_tipo_file(nome_xml, testo_xml, mime, icona_png=""):
+    """Tipo di file del programma (es. .listino) in ~/.local/share/mime con la sua icona. testo_xml = file
+    shared-mime-info completo. Si riscrive solo se cambia."""
+    mime_dir = os.path.join(xdg_data_home(), "mime")
+    if _scrivi_se_cambia(os.path.join(mime_dir, "packages", nome_xml + ".xml"), testo_xml):
+        _esegui_piano(["update-mime-database", mime_dir])
+    if icona_png:
+        _copia_icona(icona_png, "mimetypes", mime.replace("/", "-"))
+
+
+def rendi_predefinito(desktop_id, *mimes):
+    """Il programma diventa quello che apre questi tipi di file (xdg-mime). True se ora lo è davvero per tutti."""
+    voce = desktop_id + ".desktop"
+    ok = True
+    for mime in mimes:
+        r = _esegui_piano(["xdg-mime", "query", "default", mime])
+        if r is not None and r.stdout.strip() == voce:
+            continue
+        _esegui_piano(["xdg-mime", "default", voce, mime])
+        r = _esegui_piano(["xdg-mime", "query", "default", mime])
+        ok = ok and r is not None and r.stdout.strip() == voce
+    return ok
+
+
+def avvio_automatico(desktop_id, nome, commento, acceso=None, argomenti=""):
+    """Avvio all'accesso (~/.config/autostart/<id>.desktop, punta al file AppImage). acceso=None = solo domanda.
+    Ritorna lo stato. Se è acceso va richiamata a ogni avvio, così segue l'AppImage se si sposta."""
+    path = os.path.join(xdg_config_home(), "autostart", desktop_id + ".desktop")
+    if acceso is None:
+        return os.path.isfile(path)
+    if not acceso:
+        if os.path.isfile(path):
+            os.remove(path)
+        return False
+    appimage = appimage_path()
+    if not appimage:
+        raise RuntimeError("disponibile solo con il file AppImage del programma")
+    righe = ["[Desktop Entry]", "Type=Application", f"Name={nome}", f"Comment={commento}",
+             f"Exec={exec_desktop(appimage)}" + (f" {argomenti}" if argomenti else ""), f"TryExec={appimage}",
+             f"Icon={desktop_id}", "Terminal=false", "X-GNOME-Autostart-enabled=true", "X-GNOME-Autostart-Delay=5",
+             "X-TecnikGeek=1"]
+    _scrivi_se_cambia(path, "\n".join(righe) + "\n")
+    return True
+
+
+# --------------------------------------------------------------------------- salvaschermo e sospensione
+def inibisci(nome, motivo):
+    """Niente salvaschermo, blocco schermo o sospensione finché non si chiama togli_inibizione(). L'inibizione è
+    legata alla connessione D-Bus: se il programma si chiude di colpo il desktop la toglie da solo.
+    Ritorna lo stato da passare a togli_inibizione, oppure None (nessun desktop o non permesso)."""
+    try:
+        from jeepney import DBusAddress, new_method_call
+        from jeepney.io.blocking import open_dbus_connection
+        from jeepney.wrappers import unwrap_msg
+        conn = open_dbus_connection(bus="SESSION")
+    except Exception:  # noqa: BLE001 (niente bus di sessione, es. test senza desktop)
+        return None
+    voci = (("/org/gnome/SessionManager", "org.gnome.SessionManager", "Inhibit", "susu", (nome, 0, motivo, 4 | 8),
+             "Uninhibit"),  # 4 = sospensione, 8 = inattività
+            ("/org/freedesktop/ScreenSaver", "org.freedesktop.ScreenSaver", "Inhibit", "ss", (nome, motivo),
+             "UnInhibit"))
+    for percorso, servizio, metodo, firma, argomenti, togli in voci:
+        try:
+            addr = DBusAddress(percorso, bus_name=servizio, interface=servizio)
+            cookie = unwrap_msg(conn.send_and_get_reply(new_method_call(addr, metodo, firma, argomenti), timeout=5))[0]
+            return conn, addr, togli, int(cookie)
+        except Exception:  # noqa: BLE001
+            continue
+    conn.close()
+    return None
+
+
+def togli_inibizione(stato):
+    if not stato:
+        return
+    from jeepney import new_method_call
+    conn, addr, togli, cookie = stato
+    try:
+        conn.send_and_get_reply(new_method_call(addr, togli, "u", (cookie,)), timeout=5)
+    except Exception:  # noqa: BLE001
+        pass
+    finally:
+        conn.close()
 
 
 # --------------------------------------------------------------------------- portachiavi (Secret Service)

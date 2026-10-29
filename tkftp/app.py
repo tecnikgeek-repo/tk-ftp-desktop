@@ -1758,6 +1758,8 @@ def main():
     if IS_LINUX:
         from tkftp.util import LINUX_DESKTOP_ID
         app.setDesktopFileName(LINUX_DESKTOP_ID)  # Wayland: la barra delle applicazioni trova l'icona dal .desktop
+        from tkftp.tk_linux_qt import instrada_link
+        instrada_link(app)  # link (Informazioni, caffè, licenze) con l'ambiente del sistema, non con quello del pacchetto
     app.setStyle("Fusion")
     import PySide6
     from PySide6.QtCore import QLibraryInfo, QTranslator
