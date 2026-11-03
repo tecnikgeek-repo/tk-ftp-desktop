@@ -25,6 +25,7 @@ FUNZIONI_FREE: frasi brevi di cosa resta gratis (facoltativo).
 Finestra per chi non ha il Pro: testata colorata, griglia «Cosa ottieni», riga «Resta gratis»,
 tre passi in fila: 1) donazione libera 2) «Ho donato: mandami la chiave» 3) incolla la chiave e attiva.
 """
+import sys
 import threading
 import time
 
@@ -988,7 +989,7 @@ class InformazioniDialog(_Centrata, QDialog):
     """Finestra «Informazioni» UGUALE in tutti i software TK (cambia solo il colore d'accento).
 
     Scheda navy arrotondata senza barra di sistema, trascinabile: logo, nome e descrizione; schede Versione,
-    Sviluppatore, I tuoi dati, Privacy (statistiche + caselle del programma); «Controlla aggiornamenti»;
+    Sviluppatore, I tuoi dati, Privacy (statistiche + caselle del programma); «Avvisi di sicurezza di Windows» (solo su Windows); «Controlla aggiornamenti»;
     «Licenze e codice sorgente» + «Offrimi un caffè»; «Icona sul Desktop» + «Chiudi»; Termini · Privacy · Contatti.
 
         InformazioniDialog(lic, "tk-pdf", VERSION, "Lettore ed editor PDF", logo, "#e11d48",
@@ -1128,6 +1129,10 @@ class InformazioniDialog(_Centrata, QDialog):
             b = self._pulsante(testo, "tkInfoChiaro")
             b.clicked.connect(lambda _=False, b=b, fn=fn: self._extra(b, fn))
             lay.addWidget(b)
+        if sys.platform == "win32":
+            avvisi = self._pulsante("Avvisi di sicurezza di Windows", "tkInfoChiaro")
+            avvisi.clicked.connect(lambda: AvvisiWindowsDialog(nome_app, self).exec())
+            lay.addWidget(avvisi)
         if su_aggiornamenti is not None:
             agg = self._pulsante("Controlla aggiornamenti", "tkInfoAccento")
             agg.clicked.connect(lambda: self._chiudi_e(su_aggiornamenti))
@@ -1231,6 +1236,131 @@ class InformazioniDialog(_Centrata, QDialog):
 
     def mouseReleaseEvent(self, e):
         self._drag = None
+
+
+class AvvisiWindowsDialog(_Centrata, QDialog):
+    """Informazioni → «Avvisi di sicurezza di Windows»: gli stessi testi e immagini della prima schermata
+    dell'installazione. Le immagini stanno in tk_avvisi_img.py (copia identica accanto a questo file)."""
+
+    PASSI = (("Il browser ferma il download",
+              "Nell'elenco dei download scegli <b>Mantieni</b>. Su Edge: «…» accanto al file, <b>Mantieni</b>, "
+              "poi <b>Mostra altro</b> e <b>Mantieni comunque</b>.", "browser"),
+             ("«PC protetto da Windows»", "Non c'è un tasto per proseguire: premi <b>Ulteriori informazioni</b>.",
+              "ulteriori"),
+             ("Compare «Esegui comunque»", "Premilo: si apre l'installazione.", "esegui_comunque"),
+             ("«Apri file - Avviso di sicurezza»", "Se compare anche questa finestra, premi <b>Esegui</b>.", "apri_file"),
+             ("Controllo intelligente delle app (Smart App Control)",
+              "Se il programma viene bloccato senza il tasto Esegui comunque, non esiste un'eccezione per un solo "
+              "programma: si può solo spegnere il controllo in <b>Sicurezza di Windows &gt; Controllo delle app e del "
+              "browser</b>. Su alcune versioni di Windows poi non si riaccende senza reinstallare: se hai dubbi, "
+              f"{_link('scrivimi', CONTATTI)}.", None))
+
+    LARGHEZZA = 600
+    ALTEZZA = 680
+
+    def __init__(self, nome_app, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(f"{nome_app} — Avvisi di sicurezza di Windows")
+        self.setStyleSheet(
+            f"QDialog {{ background: {NAVY}; }} QLabel {{ color: #ffffff; background: transparent; }}"
+            f"#tkTesto {{ color: {CHIARO}; font-size: 13px; }}"
+            "#tkAvvisiTitolo { font-size: 18px; font-weight: 800; }"
+            f"#tkAvvisiPasso {{ background: {NAVY_2}; border-radius: 12px; }}"
+            "#tkAvvisiNome { font-size: 13px; font-weight: 700; }"
+            "#tkAvvisiNota { background: #451a03; color: #fde68a; border-radius: 12px; padding: 10px 14px;"
+            " font-size: 13px; font-weight: 600; }"
+            "QScrollArea, #tkAvvisiCorpo { background: transparent; border: 0; }"
+            "QScrollBar:vertical { background: transparent; width: 8px; }"
+            f"QScrollBar::handle:vertical {{ background: {NAVY_3}; border-radius: 4px; min-height: 30px; }}"
+            "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }"
+            "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }"
+            f"QPushButton {{ background: {NAVY_3}; color: white; border: 0; border-radius: 10px; padding: 9px 16px;"
+            " font-weight: 700; }")
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(20, 18, 20, 16)
+        lay.setSpacing(10)
+        titolo = QLabel("Avvisi di sicurezza di Windows")
+        titolo.setObjectName("tkAvvisiTitolo")
+        lay.addWidget(titolo)
+        # il contenuto scorre: la finestra entra anche negli schermi piccoli, nota e Chiudi restano in vista
+        scorri = QScrollArea()
+        scorri.setWidgetResizable(True)
+        scorri.setFrameShape(QFrame.Shape.NoFrame)
+        scorri.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        corpo = QWidget()
+        corpo.setObjectName("tkAvvisiCorpo")
+        interno = QVBoxLayout(corpo)
+        interno.setContentsMargins(0, 0, 12, 0)
+        interno.setSpacing(10)
+        interno.addWidget(self._testo(f"{nome_app} è gratuito e non ha il certificato di firma a pagamento: per questo "
+                                      "Windows non lo riconosce e può mostrarti un avviso. Non significa che abbia "
+                                      "trovato un virus. Ecco come si prosegue (immagini di esempio: il nome del file "
+                                      "cambia):"))
+        foto_larghe = self.LARGHEZZA - 40 - 12 - 8 - 28
+        for nome, spiega, immagine in self.PASSI:
+            scheda = QFrame()
+            scheda.setObjectName("tkAvvisiPasso")
+            v = QVBoxLayout(scheda)
+            v.setContentsMargins(14, 10, 14, 12)
+            v.setSpacing(4)
+            n = QLabel(nome)
+            n.setObjectName("tkAvvisiNome")
+            n.setWordWrap(True)
+            v.addWidget(n)
+            v.addWidget(self._testo(spiega))
+            foto = self._foto(immagine, foto_larghe)
+            if foto is not None:
+                v.addSpacing(4)
+                v.addWidget(foto)
+            interno.addWidget(scheda)
+        interno.addStretch(1)
+        scorri.setWidget(corpo)
+        lay.addWidget(scorri, 1)
+        nota = QLabel("Prosegui solo se hai scaricato il file da pietrodefilippis.it. Non serve disattivare "
+                      "l'antivirus: se lo segnala come minaccia, fermati e scrivimi.")
+        nota.setObjectName("tkAvvisiNota")
+        nota.setWordWrap(True)
+        lay.addWidget(nota)
+        riga = QHBoxLayout()
+        riga.addStretch(1)
+        chiudi = QPushButton("Chiudi")
+        chiudi.clicked.connect(self.accept)
+        riga.addWidget(chiudi)
+        lay.addLayout(riga)
+        schermo = QGuiApplication.primaryScreen()
+        massimo = (schermo.availableGeometry().height() - 60) if schermo is not None else self.ALTEZZA
+        self.setFixedSize(self.LARGHEZZA, min(self.ALTEZZA, massimo))
+
+    def _foto(self, chiave, larghezza):
+        """Immagine di esempio, o None: senza immagine i passi restano comunque spiegati dal testo."""
+        if not chiave:
+            return None
+        try:
+            import base64
+            from PySide6.QtGui import QPixmap
+            try:
+                from . import tk_avvisi_img as immagini
+            except ImportError:
+                import tk_avvisi_img as immagini
+            pm = QPixmap()
+            pm.loadFromData(base64.b64decode(immagini.IMMAGINI[chiave]))
+            dpr = self.devicePixelRatioF() or 1
+            pm = pm.scaledToWidth(int(larghezza * dpr), Qt.TransformationMode.SmoothTransformation)
+            pm.setDevicePixelRatio(dpr)
+            l = QLabel()
+            l.setPixmap(pm)
+            return l
+        except Exception:
+            return None
+
+    @staticmethod
+    def _testo(testo):
+        t = QLabel(testo)
+        t.setObjectName("tkTesto")
+        t.setWordWrap(True)
+        t.setTextFormat(Qt.TextFormat.RichText)
+        t.setOpenExternalLinks(True)
+        return t
 
 
 class LicenzeDialog(_Centrata, QDialog):
