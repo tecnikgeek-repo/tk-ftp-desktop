@@ -14,12 +14,16 @@ New-Item -ItemType Directory -Force $stage | Out-Null
 New-Item -ItemType Directory -Force $dist | Out-Null
 
 function Robo($src, $dst, [string[]]$extra) {
-    & robocopy $src $dst /E /NFL /NDL /NJH /NJS /NP @extra | Out-Null
+    # /R /W: senza, un file illeggibile fa riprovare robocopy all'infinito e la build resta appesa
+    & robocopy $src $dst /E /R:2 /W:2 /NFL /NDL /NJH /NJS /NP @extra | Out-Null
     if ($LASTEXITCODE -ge 8) { throw "robocopy fallito ($LASTEXITCODE): $src" }
 }
 
 $homeLine = Get-Content "$venv\pyvenv.cfg" | Where-Object { $_ -match '^home\s*=' }
 $pyHome = ($homeLine -replace '^home\s*=\s*', '').Trim()
+# uv mette una giunzione al posto della cartella: via SSH Windows non la attraversa («punto di montaggio non attendibile»)
+$pyTarget = (Get-Item $pyHome).Target
+if ($pyTarget) { $pyHome = @($pyTarget)[0] }
 $py = Join-Path $stage 'python'
 Robo $pyHome $py @('/XD', 'test', 'tests', 'idlelib', 'tkinter', 'turtledemo', 'tcl', 'include', 'libs', 'Scripts',
                    'ensurepip', 'lib2to3', 'site-packages', '__phello__', 'pydoc_data',

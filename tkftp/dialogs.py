@@ -4,15 +4,15 @@ import os
 import time
 
 from PySide6.QtCore import QRegularExpression, Qt
-from PySide6.QtGui import QRegularExpressionValidator
+from PySide6.QtGui import QGuiApplication, QRegularExpressionValidator
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox,
-    QVBoxLayout,
+    QCheckBox, QComboBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea,
+    QSpinBox, QVBoxLayout, QWidget,
 )
 
 from tkftp import APP_TITLE, VERSION
 from tkftp.listing import octal_to_perms, perms_to_octal
-from tkftp.style import ACCENT, TkDialog, ic, kind_badge, logo_tile, text_btn, tk_warn
+from tkftp.style import ACCENT, NAVY_3, TkDialog, ic, kind_badge, logo_tile, text_btn, tk_warn
 from tkftp.util import IS_LINUX, IS_MAC, human_size
 
 
@@ -206,7 +206,7 @@ class SettingsDialog(TkDialog):
               ("resume", "Riprendi"), ("skip", "Salta")]
 
     def __init__(self, parent, settings, phrase):
-        super().__init__(parent, 820)
+        super().__init__(parent, 840)
         self.s = settings
         self.head(kind_badge("gear"), "Impostazioni", "Trasferimenti, doppio clic, modifica al volo, siti condivisi")
         grid = QGridLayout()
@@ -313,7 +313,14 @@ class SettingsDialog(TkDialog):
             v.addStretch(1)  # contenuto in alto anche quando la scheda vicina è più alta
         grid.setColumnStretch(0, 1)
         grid.setColumnStretch(1, 1)
-        self.body.addLayout(grid)
+        # le schede scorrono sugli schermi bassi: Annulla e Salva restano sempre in vista
+        schede = QWidget(objectName="aschede")
+        schede.setStyleSheet("QWidget#aschede { background:transparent; }")  # solo il contenitore, non le schede
+        lista = QVBoxLayout(schede)
+        lista.setContentsMargins(0, 0, 12, 0)  # spazio per la barra di scorrimento
+        lista.setSpacing(14)
+        schede.setMinimumWidth(1)  # le schede seguono la larghezza dell'area invece di finirci sotto
+        lista.addLayout(grid)
         # caffè: sempre ben visibile nelle Impostazioni (come la card «Offrimi un caffè» dei plugin TK)
         caffe = pro.pulsante_caffe("ghost")   # None a chi ha già donato con una chiave vecchia: niente card
         if caffe is not None:
@@ -327,8 +334,23 @@ class SettingsDialog(TkDialog):
             caffe.setMinimumWidth(190)
             r5.addWidget(caffe)
             v5.addLayout(r5)
-            self.body.addWidget(c5)
+            lista.addWidget(c5)
+        area = QScrollArea()
+        area.setWidgetResizable(True)
+        area.setFrameShape(QFrame.Shape.NoFrame)
+        area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        area.setWidget(schede)
+        area.viewport().setAutoFillBackground(False)
+        area.setStyleSheet("QScrollArea { background:transparent; border:0; }"
+                           f"QScrollBar::handle:vertical {{ background:{NAVY_3}; }}")
+        self.body.addWidget(area, 1)
         self.buttons([("Annulla", "ghost", False), ("Salva", "accent", True)])
+        interno = self.minimumWidth() - 60 - 52
+        alto = lista.totalHeightForWidth(interno) if lista.hasHeightForWidth() else schede.sizeHint().height()
+        area.setFixedHeight(0)
+        resto = self.sizeHint().height()
+        schermo = (self.screen() or QGuiApplication.primaryScreen()).availableGeometry()
+        area.setFixedHeight(min(alto, max(200, int(schermo.height() * 0.92) - resto)))
         self._accept = self.accept
         self.accept = self._validate  # noqa: assegnazione voluta: controllo prima di chiudere
 

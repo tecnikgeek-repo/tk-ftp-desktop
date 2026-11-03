@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QScrollArea, QSpinBox, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
+from tkftp.tk_licenza_qt import dentro_lo_schermo
 from tkftp.util import conta
 from tkftp import APP_TITLE
 from tkftp.sites import LOGONS, PROTOCOLS, PROTOCOL_SHORT, Site, default_port, get_password, set_password
@@ -62,7 +63,7 @@ class SiteManager(QDialog):
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setModal(True)
-        self.resize(1080, 720)
+        dentro_lo_schermo(self, 1080, 720)
         self.current = None
         self._loading = False
         self._drag = None
