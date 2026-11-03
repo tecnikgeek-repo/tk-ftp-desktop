@@ -1249,11 +1249,11 @@ class AvvisiWindowsDialog(_Centrata, QDialog):
               "ulteriori"),
              ("Compare «Esegui comunque»", "Premilo: si apre l'installazione.", "esegui_comunque"),
              ("«Apri file - Avviso di sicurezza»", "Se compare anche questa finestra, premi <b>Esegui</b>.", "apri_file"),
-             ("Controllo intelligente delle app (Smart App Control)",
-              "Se il programma viene bloccato senza il tasto Esegui comunque, non esiste un'eccezione per un solo "
-              "programma: si può solo spegnere il controllo in <b>Sicurezza di Windows &gt; Controllo delle app e del "
+             ("«Controllo intelligente delle app ha bloccato un'app»",
+              "Qui non c'è Esegui comunque e il tasto dello Store non serve: non esiste un'eccezione per un solo "
+              "programma. Si può solo spegnere il controllo in <b>Sicurezza di Windows &gt; Controllo delle app e del "
               "browser</b>. Su alcune versioni di Windows poi non si riaccende senza reinstallare: se hai dubbi, "
-              f"{_link('scrivimi', CONTATTI)}.", None))
+              f"{_link('scrivimi', CONTATTI)}.", "smart_app"))
 
     LARGHEZZA = 600
     ALTEZZA = 680
