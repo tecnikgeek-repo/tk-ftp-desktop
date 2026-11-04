@@ -1,4 +1,5 @@
 """I due pannelli affiancati: «Questo computer» e «Server», ognuno con albero delle cartelle ed elenco dei file."""
+from tkftp.errori import frase_errore
 import json
 import os
 
@@ -420,7 +421,7 @@ class LocalPane(Pane):
             else:
                 ents = listing.local_entries(path, self.show_hidden)
         except OSError as exc:
-            self.footer.setText(f"Non riesco ad aprire la cartella: {exc.strerror or exc}")
+            self.footer.setText(frase_errore("Non riesco ad aprire la cartella.", exc))
             return
         sel = {e.name for e in self.view.selected_entries()} if keep else set()
         if self.watch.directories():

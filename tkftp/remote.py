@@ -6,6 +6,7 @@ Lezioni (anche dall'app telefono tk-ftp): STOR/RETR/LIST rispondono 125/150 (pre
 si usa l'indirizzo del server di controllo, non quello della risposta 227 (dietro NAT è spesso privato); in FTPS il
 canale dati si protegge DOPO aver mandato il comando (il server fa la stretta di mano TLS solo allora) e molti server
 (vsftpd, ProFTPD, FileZilla Server) vogliono la stessa sessione TLS del canale di controllo."""
+from tkftp.errori import motivo_errore
 import base64
 import ftplib
 import hashlib
@@ -23,7 +24,7 @@ BLOCK = 64 * 1024
 
 
 class RemoteError(Exception):
-    pass
+    leggibile = True
 
 
 class AuthError(RemoteError):
@@ -93,16 +94,16 @@ def friendly_error(exc):
         if text.startswith("530"):
             return "Accesso negato: utente o password errati."
         if text.startswith("550"):
-            return "Operazione non permessa o file inesistente (" + text + ")."
-        return "Il server ha rifiutato: " + text
+            return "Operazione non permessa o file inesistente."
+        return "Il server ha rifiutato l'operazione."
     if isinstance(exc, ftplib.error_temp):
-        return "Errore temporaneo del server: " + str(exc)
+        return "Il server ha un problema temporaneo: riprova tra poco."
     if isinstance(exc, ssl.SSLError):
-        return "Errore TLS: " + (exc.reason or str(exc))
-    if isinstance(exc, OSError) and exc.errno is None and exc.args:
-        return str(exc.args[0])
-    if isinstance(exc, OSError):
-        return f"Errore di rete o di file: {exc.strerror or exc}"
+        return "Connessione sicura non riuscita: controlla il tipo di collegamento nelle impostazioni del sito."
+    if isinstance(exc, FileNotFoundError):
+        return "File o cartella inesistente."
+    if isinstance(exc, PermissionError):
+        return "Non hai il permesso di usare questo file o questa cartella."
     try:
         import paramiko
         if isinstance(exc, paramiko.AuthenticationException):
@@ -110,10 +111,10 @@ def friendly_error(exc):
         if isinstance(exc, IOError) and getattr(exc, "errno", None) == 2:
             return "File o cartella inesistente."
         if isinstance(exc, paramiko.SSHException):
-            return "Errore SSH: " + str(exc)
+            return "Collegamento SFTP non riuscito: controlla i dati del sito e riprova."
     except ImportError:
         pass
-    return str(exc) or exc.__class__.__name__
+    return motivo_errore(exc)
 
 
 def make_client(site, password="", log=None, passphrase=""):
@@ -327,7 +328,7 @@ class FtpClient:
                     trust.remember_tls(s.host, s.port)  # da qui in poi il chiaro su questo server non si accetta più
             except ftplib.error_perm as exc:
                 if s.protocol == "ftps":
-                    raise RemoteError(f"Il server non accetta FTPS (AUTH TLS rifiutato: {exc}). "
+                    raise RemoteError("Il server non accetta FTPS. "
                                       "Prova con «FTP · TLS esplicito se disponibile».") from None
                 if trust.trusted_cert(s.host, s.port) or trust.tls_seen(s.host, s.port):
                     self._close_quiet()
@@ -591,7 +592,7 @@ def _cert_reason(exc):
         return "il certificato è scaduto"
     if "unable to get local issuer" in msg:
         return "il certificato non è emesso da un'autorità riconosciuta"
-    return getattr(exc, "verify_message", "") or str(exc)
+    return "il certificato non è valido"
 
 
 # =========================================================================== SFTP
@@ -677,7 +678,7 @@ class SftpClient:
             except (ValueError, TypeError):
                 raise NeedPassword("passphrase", "Frase della chiave errata: riprova") from None
         except (ValueError, paramiko.SSHException) as exc:
-            raise RemoteError(f"Chiave non leggibile: {exc}") from None
+            raise RemoteError("Chiave non leggibile o di un tipo non supportato.") from None
         if isinstance(loaded, rsa.RSAPrivateKey):
             cls = paramiko.RSAKey
         elif isinstance(loaded, ed25519.Ed25519PrivateKey):
@@ -712,8 +713,7 @@ class SftpClient:
             t.auth_password(user, pw)
         except paramiko.BadAuthenticationType as exc:
             if "keyboard-interactive" not in exc.allowed_types:
-                raise AuthError("Il server non accetta la password (metodi ammessi: "
-                                + ", ".join(exc.allowed_types) + ").") from None
+                raise AuthError("Il server non accetta la password: serve un altro tipo di accesso.") from None
             t.auth_interactive(user, lambda title, instr, prompts: [pw for _p, _echo in prompts])
         except paramiko.AuthenticationException:
             raise AuthError("Accesso negato: utente o password errati.") from None

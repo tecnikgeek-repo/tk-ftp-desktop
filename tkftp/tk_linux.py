@@ -327,7 +327,7 @@ def _raccolta():
     except OSError:
         raise
     except Exception as exc:  # noqa: BLE001 (D-Bus assente, servizio non avviato…)
-        raise OSError(f"portachiavi del sistema non disponibile ({exc.__class__.__name__}: {exc})") from exc
+        raise OSError("portachiavi del sistema non disponibile") from exc
 
 
 def _attributi(servizio, account=None):

@@ -1,4 +1,5 @@
 """Gestore siti: gruppi e siti a sinistra, scheda del sito a destra (si salva da sola mentre scrivi)."""
+from tkftp.errori import frase_errore
 import os
 
 from PySide6.QtCore import QSize, Qt, QTimer, Signal
@@ -544,7 +545,7 @@ class SiteManager(QDialog):
                 set_password(s, pw)
         except OSError as exc:
             self.saved.setText("")
-            tk_choice(self, APP_TITLE, f"Non riesco a salvare la password nel portachiavi:\n{exc}", [("OK", "accent")], "warn")
+            tk_choice(self, APP_TITLE, frase_errore("Non riesco a salvare la password nel portachiavi.", exc), [("OK", "accent")], "warn")
             return
         self.saved.setText("Salvato")
         if getattr(s, "website", "") != getattr(self, "_web_last", None) and self.actions.get("logo"):
@@ -690,7 +691,7 @@ class SiteManager(QDialog):
         try:
             logos.set_manual(self.current, path)
         except Exception as exc:  # noqa: BLE001
-            tk_choice(self, APP_TITLE, f"Non riesco a usare questa immagine:\n{exc}", [("OK", "accent")], "warn")
+            tk_choice(self, APP_TITLE, frase_errore("Non riesco a usare questa immagine.", exc), [("OK", "accent")], "warn")
             return
         if self.actions.get("logo_changed"):
             self.actions["logo_changed"](self.current.id)

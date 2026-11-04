@@ -219,7 +219,7 @@ class Licenza:
             try:
                 return json.loads(e.read().decode("utf-8"))
             except Exception:
-                return {"success": False, "message": f"Errore del server ({e.code})."}
+                return {"success": False, "message": "Il server delle licenze non risponde: riprova più tardi."}
 
     # -- firma
     def _valida(self, chiave, dati):

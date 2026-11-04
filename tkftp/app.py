@@ -1,5 +1,6 @@
 """Finestra principale di tk-ftp: connessione rapida in testata, pannello del computer e del server affiancati,
 coda trasferimenti e registro in basso. Tutto il lavoro di rete gira fuori dal thread dell'interfaccia."""
+from tkftp.errori import frase_errore, motivo_errore
 import collections
 import html
 import io
@@ -914,7 +915,7 @@ class MainWindow(QMainWindow):
         try:
             open_in_editor(w.local, self.settings.value("editor", ""))
         except Exception as exc:  # noqa: BLE001
-            tk_warn(self, APP_TITLE, f"Non riesco ad aprire l'editor:\n{exc}")
+            tk_warn(self, APP_TITLE, frase_errore("Non riesco ad aprire l'editor.", exc))
 
     def _stop_edit(self):
         w = self._sel_edit()
@@ -987,7 +988,7 @@ class MainWindow(QMainWindow):
             try:
                 os.mkdir(os.path.join(self.local_pane.path, name.strip()))
             except OSError as exc:
-                tk_warn(self, APP_TITLE, f"Non riesco a creare la cartella:\n{exc.strerror or exc}")
+                tk_warn(self, APP_TITLE, frase_errore("Non riesco a creare la cartella.", exc))
             self.local_pane.refresh()
 
     def local_rename(self):
@@ -1004,7 +1005,7 @@ class MainWindow(QMainWindow):
             try:
                 os.rename(path, dst)  # sul Mac sostituirebbe in silenzio un file che c'è già: controllato sopra
             except OSError as exc:
-                tk_warn(self, APP_TITLE, f"Non riesco a rinominare:\n{exc.strerror or exc}")
+                tk_warn(self, APP_TITLE, frase_errore("Non riesco a rinominare.", exc))
             self.local_pane.refresh()
 
     def local_delete(self):
@@ -1260,7 +1261,7 @@ class MainWindow(QMainWindow):
             try:
                 logos.update(site, force=force)
             except Exception as exc:  # noqa: BLE001
-                self._log_thread("error", f"Logo di {site.title}: {exc}")
+                self._log_thread("error", frase_errore(f"Logo di {site.title}.", exc))
             self.bridge.post(lambda sid=site.id: self._logo_ready(sid))
 
     def request_logo(self, site, force=False):
@@ -1338,7 +1339,7 @@ class MainWindow(QMainWindow):
                 if phrase:
                     res = filezilla.read_file(path, phrase)
         except Exception as exc:  # noqa: BLE001
-            tk_warn(self, APP_TITLE, f"Non riesco a leggere il file:\n{exc}")
+            tk_warn(self, APP_TITLE, frase_errore("Non riesco a leggere il file.", exc))
             return
         if not res.sites:
             tk_info(self, APP_TITLE, "Nel file non ci sono siti da importare.")
@@ -1378,7 +1379,7 @@ class MainWindow(QMainWindow):
         try:
             filezilla.write_file(path, self.store.sites, pws, include_passwords=(r == 2))
         except OSError as exc:
-            tk_warn(self, APP_TITLE, f"Non riesco a scrivere il file:\n{exc}")
+            tk_warn(self, APP_TITLE, frase_errore("Non riesco a scrivere il file.", exc))
             return
         tk_info(self, "Esportazione completata", f"{conta(len(self.store.sites), 'sito', 'siti')} in\n{path}\n\n"
                 "Si apre con Importa negli altri programmi FTP e nell'app tk-ftp sul telefono.")
@@ -1392,14 +1393,14 @@ class MainWindow(QMainWindow):
         try:
             self.sync.write()
         except Exception as exc:  # noqa: BLE001
-            self._log_thread("error", f"Cartella condivisa: {exc}")
+            self._log_thread("error", frase_errore("Cartella condivisa.", exc))
 
     def _check_shared(self):
         try:
             self._sync_pending = True
             r = self.sync.check()
         except Exception as exc:  # noqa: BLE001
-            self._log_thread("error", f"Cartella condivisa: {exc}")
+            self._log_thread("error", frase_errore("Cartella condivisa.", exc))
             return
         finally:
             self._sync_pending = False
@@ -1425,7 +1426,7 @@ class MainWindow(QMainWindow):
             if vals["shared_pw"] and dlg.phrase.text() != sync.get_phrase():
                 sync.set_phrase(dlg.phrase.text())
         except OSError as exc:
-            tk_warn(self, APP_TITLE, f"Non riesco a salvare la frase segreta nel portachiavi:\n{exc}")
+            tk_warn(self, APP_TITLE, frase_errore("Non riesco a salvare la frase segreta nel portachiavi.", exc))
         if bool(vals["show_logos"]) != style.LOGOS["enabled"]:
             style.LOGOS["enabled"] = bool(vals["show_logos"])  # spento: nessuna richiesta di rete per i loghi
             style.clear_badge_cache()
@@ -1466,7 +1467,7 @@ class MainWindow(QMainWindow):
         try:
             path = create_desktop_shortcut()
         except Exception as exc:
-            tk_warn(self, APP_TITLE, f"Non riesco a creare l'icona sul Desktop:\n{exc}")
+            tk_warn(self, APP_TITLE, frase_errore("Non riesco a creare l'icona sul Desktop.", exc))
             return
         tk_info(self, APP_TITLE, f"Icona creata sul Desktop:\n{path}")
 
@@ -1504,7 +1505,7 @@ class MainWindow(QMainWindow):
             try:
                 m, err = updater.fetch_manifest(), ""
             except Exception as exc:  # noqa: BLE001
-                m, err = None, str(exc)
+                m, err = None, motivo_errore(exc)
             self.bridge.post(lambda: self._checked(m, err, manual))
         threading.Thread(target=work, daemon=True).start()
 
@@ -1568,7 +1569,7 @@ class MainWindow(QMainWindow):
             except InterruptedError:
                 self.bridge.post(prog.close)
             except Exception as exc:  # noqa: BLE001
-                msg = str(exc)
+                msg = motivo_errore(exc)
                 self.bridge.post(lambda: (prog.close(), tk_warn(self, APP_TITLE, f"Aggiornamento non riuscito:\n{msg}")))
 
         def on_ok(path):
@@ -1578,7 +1579,7 @@ class MainWindow(QMainWindow):
                 updater.apply_update(path, new_version=str(self.manifest["version"]))
             except Exception as exc:  # noqa: BLE001
                 prog.close()
-                tk_warn(self, APP_TITLE, f"Aggiornamento non riuscito:\n{exc}")
+                tk_warn(self, APP_TITLE, frase_errore("Aggiornamento non riuscito.", exc))
                 return
             self.closing_for_update = True
             QTimer.singleShot(300, QApplication.instance().quit)

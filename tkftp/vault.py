@@ -65,7 +65,7 @@ def set_secret(account, secret):
         cmd = f'add-generic-password -U -s "{SERVICE}" -a "{account}" -l "tk-ftp" -w "{value}"\n'
         r = subprocess.run(["security", "-i"], input=cmd, capture_output=True, text=True, timeout=20)
         if r.returncode != 0 or "error" in (r.stderr or "").lower():
-            raise OSError("Portachiavi: scrittura non riuscita " + (r.stderr or "").strip()[:200])
+            raise OSError("Portachiavi: scrittura non riuscita")
         return
     if IS_LINUX:
         tk_linux.scrivi_segreto(SERVICE, account, raw, f"tk-ftp: {account}")

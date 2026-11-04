@@ -156,7 +156,7 @@ def parse(data, phrase=None):
     try:
         root = ET.fromstring(data)
     except ET.ParseError as exc:
-        raise ValueError(f"il file non è un XML valido ({exc})")
+        raise ValueError("il file non è un XML valido")
     servers = root.find("Servers") if root.tag == "FileZilla3" else (root if root.tag == "Servers" else None)
     if servers is None:
         raise ValueError("non è un Gestore siti di FileZilla (manca <Servers>)")

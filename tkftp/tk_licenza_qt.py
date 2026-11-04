@@ -25,6 +25,7 @@ FUNZIONI_FREE: frasi brevi di cosa resta gratis (facoltativo).
 Finestra per chi non ha il Pro: testata colorata, griglia «Cosa ottieni», riga «Resta gratis»,
 tre passi in fila: 1) donazione libera 2) «Ho donato: mandami la chiave» 3) incolla la chiave e attiva.
 """
+import logging
 import sys
 import threading
 import time
@@ -61,7 +62,8 @@ def _in_sottofondo(funzione, al_termine):
         try:
             ok, msg = funzione()
         except Exception as e:  # mai bloccare il programma per la licenza
-            ok, msg = False, f"Errore: {e}"
+            logging.getLogger("tk").warning("licenza: %r", e)
+            ok, msg = False, "Operazione non riuscita: controlla la connessione e riprova."
         ponte.fatto.emit(al_termine, ok, msg)
 
     threading.Thread(target=lavoro, daemon=True).start()
@@ -1431,4 +1433,5 @@ class LicenzeDialog(_Centrata, QDialog):
                 with open(self._file[i], encoding="utf-8", errors="replace") as fh:
                     self.testo.setPlainText(fh.read())
             except Exception as e:
-                self.testo.setPlainText(f"Non riesco a leggere il file: {e}")
+                logging.getLogger("tk").warning("licenza: %r", e)
+                self.testo.setPlainText("Non riesco a leggere il file.")
