@@ -1,6 +1,7 @@
 """Finestra principale di tk-ftp: connessione rapida in testata, pannello del computer e del server affiancati,
 coda trasferimenti e registro in basso. Tutto il lavoro di rete gira fuori dal thread dell'interfaccia."""
 from tkftp.errori import frase_errore, motivo_errore
+import logging
 import collections
 import html
 import io
@@ -397,6 +398,10 @@ class MainWindow(QMainWindow):
 
     # ================================================================== registro
     def _log_thread(self, kind, text):
+        # comandi e risposte del server sono tecnici, spesso in inglese: solo nel file di registro, mai a schermo
+        if kind in ("cmd", "resp"):
+            logging.getLogger("tk").debug("%s: %s", kind, text)
+            return
         with self._log_lock:
             self._log_buf.append((time.strftime("%H:%M:%S"), kind, text))
 
@@ -409,8 +414,6 @@ class MainWindow(QMainWindow):
         lines = []
         for t, kind, text in items[-800:]:
             col = LOG_COLORS.get(kind, "#e2e8f0")
-            if kind == "resp" and text[:1] in ("4", "5"):
-                col = LOG_COLORS["error"]
             lines.append(f'<span style="color:#64748b">{t}</span>&nbsp;&nbsp;<span style="color:{col}"><b>'
                          f'{LOG_LABEL.get(kind, kind)}:</b>&nbsp;{html.escape(text)}</span>')
         self.log_view.appendHtml("<br>".join(lines))
