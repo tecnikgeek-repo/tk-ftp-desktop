@@ -595,15 +595,31 @@ class TkDialog(QDialog):
         row.addWidget(ico)
         col = QVBoxLayout()
         col.setSpacing(3)
+        # spazio vero per i testi (larghezza della scheda - margini - icona - distanza): le QLabel che vanno
+        # a capo in una finestra a larghezza fissa prendono l'altezza di UNA riga, cosi' un sottotitolo su
+        # due righe (o uno schermo ridimensionato, es. Desktop remoto) finiva sopra al titolo, tagliato.
+        largo_scheda = self.card.minimumWidth()
+        if largo_scheda <= 0:
+            fuori = self.layout().contentsMargins()
+            largo_scheda = self.width() - fuori.left() - fuori.right()
+        dentro = self.body.contentsMargins()
+        dpr = icon_pixmap.devicePixelRatio() or 1
+        largo = max(120, largo_scheda - dentro.left() - dentro.right()
+                    - int(icon_pixmap.width() / dpr) - row.spacing())
         t = QLabel(title)
         t.setWordWrap(True)
         t.setStyleSheet("font-size:19px; font-weight:800; color:#ffffff;")
         col.addWidget(t)
+        testi = [t]
         if sub:
             s = QLabel(sub)
             s.setObjectName("asub")
             s.setWordWrap(True)
             col.addWidget(s)
+            testi.append(s)
+        for lab in testi:
+            lab.ensurePolished()                 # prima il foglio di stile (dimensione del carattere)
+            lab.setMinimumHeight(lab.heightForWidth(largo))
         row.addLayout(col, 1)
         self.body.addLayout(row)
 
